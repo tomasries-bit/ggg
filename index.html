@@ -1,1 +1,298 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sémantický Časostroj</title>
+    <style>
+        :root {
+            --bg-color: #1c1610;
+            --accent-color: #d4a373;
+            --card-bg: rgba(20, 15, 10, 0.85);
+            --text-color: #faedcd;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.8s ease, color 0.8s ease;
+        }
+
+        .time-machine {
+            background: var(--card-bg);
+            border: 2px solid var(--accent-color);
+            border-radius: 20px;
+            padding: 35px;
+            max-width: 650px;
+            width: 100%;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+            text-align: center;
+            transition: border-color 0.8s ease;
+        }
+
+        .era-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            background: var(--accent-color);
+            color: #111;
+            font-weight: bold;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            transition: background 0.8s ease;
+        }
+
+        #year-display {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 5rem;
+            font-weight: 900;
+            margin: 10px 0;
+            color: var(--accent-color);
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
+            transition: color 0.8s ease;
+        }
+
+        #story-text {
+            font-size: 1.1rem;
+            min-height: 50px;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            opacity: 0.9;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        input {
+            padding: 14px 18px;
+            font-size: 1.1rem;
+            border-radius: 10px;
+            border: 2px solid var(--accent-color);
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            width: 65%;
+            outline: none;
+        }
+
+        button {
+            padding: 14px 24px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 10px;
+            border: none;
+            background: var(--accent-color);
+            color: #111;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+
+        button:hover { opacity: 0.9; }
+        button:active { transform: scale(0.97); }
+
+        #error-msg {
+            color: #ff6b6b;
+            font-size: 0.95rem;
+            min-height: 22px;
+            margin-bottom: 15px;
+        }
+
+        /* História tipov */
+        .history-list {
+            margin-top: 25px;
+            text-align: left;
+            max-height: 240px;
+            overflow-y: auto;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            padding-top: 15px;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.06);
+            font-size: 0.95rem;
+        }
+
+        .history-item.best {
+            border-left: 4px solid #4ade80;
+            background: rgba(74, 222, 128, 0.12);
+        }
+
+        .year-pill {
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 1.05rem;
+            color: var(--accent-color);
+        }
+    </style>
+</head>
+<body>
+
+<div class="time-machine">
+    <div class="era-badge" id="era-badge">Štartovacia pozícia • Stredovek</div>
+    <div id="year-display">1000</div>
+    <div id="story-text">
+        Uviazol si v temnom stredoveku. Zadávaj slová – čím bližšie budeš k tajnému slovu, tým modernejší rok ti časostroj nastaví!
+    </div>
+
+    <div class="input-group">
+        <input type="text" id="word-input" placeholder="Zadaj slovo (napr. voda, auto, čaj...)" onkeypress="if(event.key==='Enter') sendGuess()">
+        <button onclick="sendGuess()">Skok v čase</button>
+    </div>
+    <div id="error-msg"></div>
+
+    <div class="history-list" id="history-list"></div>
+</div>
+
+<script>
+    let displayedYear = 1000;
+    let guesses = [];
+
+    // Prepočet skóre (0 - 10000) na letopočet (1000 - 2026)
+    function scoreToYear(score) {
+        const startYear = 1000;
+        const targetYear = 2026;
+        const progress = score / 10000;
+        return Math.round(startYear + progress * (targetYear - startYear));
+    }
+
+    async function sendGuess() {
+        const input = document.getElementById('word-input');
+        const errorBox = document.getElementById('error-msg');
+        const word = input.value.trim();
+
+        if (!word) return;
+        errorBox.innerText = "";
+
+        try {
+            const response = await fetch('/guess', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ word: word })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                errorBox.innerText = data.error;
+                return;
+            }
+
+            input.value = "";
+            const targetYear = scoreToYear(data.score);
+
+            // Animácia pretáčania rokov
+            animateYear(displayedYear, targetYear);
+            displayedYear = targetYear;
+
+            // Zmena atmosféry doby
+            updateEraTheme(targetYear, data.won, data.word);
+
+            // Uloženie do histórie a zoradenie od najmodernejšieho roku
+            guesses.push({
+                word: data.word,
+                year: targetYear,
+                score: data.score,
+                rank: data.rank,
+                won: data.won
+            });
+            guesses.sort((a, b) => b.year - a.year);
+            renderHistory();
+
+        } catch (err) {
+            errorBox.innerText = "Chyba spojenia so serverom.";
+        }
+    }
+
+    function animateYear(start, end) {
+        const el = document.getElementById('year-display');
+        const duration = 600;
+        const startTime = performance.now();
+
+        function update(now) {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            // Plynulé spomalenie na konci (ease-out)
+            const ease = 1 - Math.pow(1 - progress, 3);
+            const current = Math.round(start + (end - start) * ease);
+            el.innerText = current;
+
+            if (progress < 1) {
+                requestAnimationFrame(update);
+            }
+        }
+        requestAnimationFrame(update);
+    }
+
+    function updateEraTheme(year, won, word) {
+        const root = document.documentElement;
+        const badge = document.getElementById('era-badge');
+        const story = document.getElementById('story-text');
+
+        if (won) {
+            root.style.setProperty('--bg-color', '#062c1e');
+            root.style.setProperty('--accent-color', '#4ade80');
+            badge.innerText = "CIEĽ DOSIAHNUTÝ • SÚČASNOSŤ";
+            story.innerHTML = `<strong>BINGO!</strong> Slovo <strong>„${word}“</strong> ťa prenieslo priamo do roku <strong>2026</strong>! Časostroj je stabilizovaný.`;
+            return;
+        }
+
+        if (year < 1450) {
+            root.style.setProperty('--bg-color', '#1c1610');
+            root.style.setProperty('--accent-color', '#d4a373');
+            badge.innerText = "Vrcholný stredovek";
+            story.innerText = `Slovo „${word}“ ťa nechalo v dobe hradov, rytierov a sviečok. Významovo si ešte veľmi ďaleko.`;
+        } else if (year < 1750) {
+            root.style.setProperty('--bg-color', '#241726');
+            root.style.setProperty('--accent-color', '#c77dff');
+            badge.innerText = "Renesancia a zámorské objavy";
+            story.innerText = `Posunul si sa vpred! Okolo teba vznikajú prvé kníhtlačiarne a plachetnice, ale cieľ je stále v budúcnosti.`;
+        } else if (year < 1900) {
+            root.style.setProperty('--bg-color', '#18222f');
+            root.style.setProperty('--accent-color', '#60a5fa');
+            badge.innerText = "Priemyselná revolúcia";
+            story.innerText = `Cítiš dym parných lokomotív a počuješ stroje! Tvoj tip „${word}“ už začína dávať zmysel.`;
+        } else if (year < 1990) {
+            root.style.setProperty('--bg-color', '#2b192e');
+            root.style.setProperty('--accent-color', '#f472b6');
+            badge.innerText = "20. storočie • Éra elektriny a rádií";
+            story.innerText = `Si veľmi blízko! Okolo teba jazdia autá, svietia neóny a hrajú gramofóny.`;
+        } else {
+            root.style.setProperty('--bg-color', '#0f2936');
+            root.style.setProperty('--accent-color', '#38bdf8');
+            badge.innerText = "Digitálny vek • Na dosah cieľa";
+            story.innerText = `Horíš! Slovo „${word}“ ťa vystrelilo na prah moderného sveta. Stačí už len malý krôčik!`;
+        }
+    }
+
+    function renderHistory() {
+        const list = document.getElementById('history-list');
+        list.innerHTML = guesses.map((g, i) => `
+            <div class="history-item ${i === 0 ? 'best' : ''}">
+                <span><strong>${g.word}</strong> <small>(Poradie #${g.rank})</small></span>
+                <span class="year-pill">ROK ${g.year}</span>
+            </div>
+        `).join('');
+    }
+</script>
+
+</body>
+</html>
 
