@@ -3,296 +3,427 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sémantický Časostroj</title>
+    <title>Sémantický barman</title>
     <style>
-        :root {
-            --bg-color: #1c1610;
-            --accent-color: #d4a373;
-            --card-bg: rgba(20, 15, 10, 0.85);
-            --text-color: #faedcd;
-        }
+        * { box-sizing: border-box; }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
             margin: 0;
-            padding: 20px;
             min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(circle at top, #2c1e16, #120c08);
+            color: #f5ebe0;
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: background-color 0.8s ease, color 0.8s ease;
+            padding: 20px;
         }
 
-        .time-machine {
-            background: var(--card-bg);
-            border: 2px solid var(--accent-color);
-            border-radius: 20px;
-            padding: 35px;
-            max-width: 650px;
+        .bar-card {
             width: 100%;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+            max-width: 720px;
+            background: rgba(28, 19, 14, 0.92);
+            border: 2px solid #8c5a32;
+            border-radius: 24px;
+            padding: 28px;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75);
             text-align: center;
-            transition: border-color 0.8s ease;
         }
 
-        .era-badge {
+        h1 {
+            margin: 0 0 6px;
+            font-size: 2rem;
+            color: #ffca7a;
+        }
+
+        .subtitle {
+            margin: 0 0 20px;
+            color: #cbb7a2;
+            font-size: 0.98rem;
+        }
+
+        /* Scéna s barovým pultom, postavičkou a drinkom */
+        .stage {
+            position: relative;
+            background: linear-gradient(180deg, #1a120d 0%, #261911 68%, #4a2c18 68%, #361e0f 100%);
+            border-radius: 18px;
+            padding: 20px 16px 14px;
+            border: 1px solid rgba(255, 202, 122, 0.2);
+            overflow: hidden;
+        }
+
+        .speech-bubble {
             display: inline-block;
-            padding: 6px 16px;
-            border-radius: 20px;
-            background: var(--accent-color);
-            color: #111;
-            font-weight: bold;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            background: #fff8eb;
+            color: #23160e;
+            padding: 10px 18px;
+            border-radius: 16px;
+            font-weight: 600;
+            font-size: 1rem;
             margin-bottom: 10px;
-            transition: background 0.8s ease;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+            transition: transform 0.25s ease;
         }
 
-        #year-display {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 5rem;
-            font-weight: 900;
-            margin: 10px 0;
-            color: var(--accent-color);
-            text-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
-            transition: color 0.8s ease;
+        .speech-bubble.pop {
+            transform: scale(1.05);
         }
 
-        #story-text {
-            font-size: 1.1rem;
-            min-height: 50px;
-            margin-bottom: 25px;
-            line-height: 1.5;
-            opacity: 0.9;
+        .scene-row {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 28px;
+            min-height: 220px;
         }
 
-        .input-group {
+        svg#character-svg {
+            width: 170px;
+            height: 210px;
+            overflow: visible;
+        }
+
+        svg#drink-svg {
+            width: 110px;
+            height: 150px;
+            transform-origin: 50% 80%;
+            transition: transform 0.45s ease;
+        }
+
+        /* Animácia naklonenia pohára pri pití */
+        .drinking-glass {
+            animation: tiltDrink 1.3s ease-in-out;
+        }
+
+        @keyframes tiltDrink {
+            0%   { transform: translate(0, 0) rotate(0deg); }
+            30%  { transform: translate(-45px, -35px) rotate(-38deg); }
+            70%  { transform: translate(-45px, -35px) rotate(-38deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        /* Animácia postavičky pri zlej chuti (otrasenie) */
+        .yuck-shake {
+            animation: yuckAnim 0.6s ease-in-out;
+        }
+
+        @keyframes yuckAnim {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            25% { transform: translateX(-8px) rotate(-3deg); }
+            50% { transform: translateX(8px) rotate(3deg); }
+            75% { transform: translateX(-5px) rotate(-2deg); }
+        }
+
+        /* Animácia postavičky pri dobrom drinku (poskočenie) */
+        .yum-bounce {
+            animation: yumAnim 0.65s ease-out;
+        }
+
+        @keyframes yumAnim {
+            0%   { transform: translateY(0) scale(1); }
+            40%  { transform: translateY(-14px) scale(1.04); }
+            100% { transform: translateY(0) scale(1); }
+        }
+
+        .drink-meta {
+            margin-top: 10px;
+            font-size: 0.92rem;
+            color: #ffdca8;
+        }
+
+        .input-area {
             display: flex;
             gap: 10px;
-            justify-content: center;
-            margin-bottom: 15px;
+            margin-top: 20px;
         }
 
         input {
-            padding: 14px 18px;
-            font-size: 1.1rem;
-            border-radius: 10px;
-            border: 2px solid var(--accent-color);
-            background: rgba(255, 255, 255, 0.1);
+            flex: 1;
+            padding: 13px 16px;
+            font-size: 1.05rem;
+            border-radius: 12px;
+            border: 2px solid #8c5a32;
+            background: rgba(255, 255, 255, 0.08);
             color: #fff;
-            width: 65%;
             outline: none;
         }
 
+        input:focus {
+            border-color: #ffca7a;
+        }
+
         button {
-            padding: 14px 24px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            border-radius: 10px;
+            padding: 13px 22px;
+            font-size: 1.05rem;
+            font-weight: 700;
             border: none;
-            background: var(--accent-color);
-            color: #111;
+            border-radius: 12px;
+            background: #ffca7a;
+            color: #231409;
             cursor: pointer;
-            transition: transform 0.1s, opacity 0.2s;
+            transition: transform 0.12s ease, background 0.2s ease;
         }
 
-        button:hover { opacity: 0.9; }
-        button:active { transform: scale(0.97); }
+        button:hover:not(:disabled) {
+            background: #ffd99e;
+        }
 
-        #error-msg {
-            color: #ff6b6b;
-            font-size: 0.95rem;
+        button:active:not(:disabled) {
+            transform: scale(0.97);
+        }
+
+        button:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        #error-box {
             min-height: 22px;
-            margin-bottom: 15px;
+            color: #ff7b7b;
+            font-size: 0.92rem;
+            margin-top: 8px;
         }
 
-        /* História tipov */
-        .history-list {
-            margin-top: 25px;
+        .history {
+            margin-top: 16px;
             text-align: left;
-            max-height: 240px;
+            max-height: 170px;
             overflow-y: auto;
-            border-top: 1px solid rgba(255, 255, 255, 0.15);
-            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            padding-top: 12px;
         }
 
-        .history-item {
+        .history-row {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 10px 14px;
-            margin-bottom: 8px;
+            padding: 8px 12px;
+            margin-bottom: 6px;
             border-radius: 8px;
-            background: rgba(255, 255, 255, 0.06);
-            font-size: 0.95rem;
-        }
-
-        .history-item.best {
-            border-left: 4px solid #4ade80;
-            background: rgba(74, 222, 128, 0.12);
-        }
-
-        .year-pill {
-            font-family: monospace;
-            font-weight: bold;
-            font-size: 1.05rem;
-            color: var(--accent-color);
+            background: rgba(255, 255, 255, 0.05);
+            font-size: 0.92rem;
         }
     </style>
 </head>
 <body>
 
-<div class="time-machine">
-    <div class="era-badge" id="era-badge">Štartovacia pozícia • Stredovek</div>
-    <div id="year-display">1000</div>
-    <div id="story-text">
-        Uviazol si v temnom stredoveku. Zadávaj slová – čím bližšie budeš k tajnému slovu, tým modernejší rok ti časostroj nastaví!
+<div class="bar-card">
+    <h1>Sémantický barman</h1>
+    <p class="subtitle">Tipni slovo – čím bližšie si k cieľu, tým lepší drink namixujem a zákazník si pochutí.</p>
+
+    <div class="stage">
+        <div class="speech-bubble" id="speech">Zadaj prvé slovo a namiešam ti prvý drink!</div>
+
+        <div class="scene-row">
+            <!-- Postavička -->
+            <svg id="character-svg" viewBox="0 0 160 200">
+                <g id="char-body">
+                    <!-- Trup -->
+                    <rect x="42" y="112" width="76" height="75" rx="22" fill="#3d5a80" />
+                    <!-- Hlava -->
+                    <circle cx="80" cy="68" r="38" fill="#f4c095" />
+                    <!-- Vlasy -->
+                    <path d="M44 58 Q80 20 116 58 Q106 36 80 36 Q54 36 44 58 Z" fill="#3b2314" />
+
+                    <!-- Ľavé a pravé oko -->
+                    <g id="eyes-normal">
+                        <circle cx="66" cy="65" r="4.5" fill="#1e1b18" />
+                        <circle cx="94" cy="65" r="4.5" fill="#1e1b18" />
+                    </g>
+                    <!-- Znechutené / privreté oči -->
+                    <g id="eyes-yuck" style="display:none;">
+                        <path d="M59 62 L72 68 L59 71" fill="none" stroke="#1e1b18" stroke-width="3" stroke-linecap="round" />
+                        <path d="M101 62 L88 68 L101 71" fill="none" stroke="#1e1b18" stroke-width="3" stroke-linecap="round" />
+                    </g>
+                    <!-- Šťastné oči (oblúčiky) -->
+                    <g id="eyes-happy" style="display:none;">
+                        <path d="M59 67 Q66 58 73 67" fill="none" stroke="#1e1b18" stroke-width="3" stroke-linecap="round" />
+                        <path d="M87 67 Q94 58 101 67" fill="none" stroke="#1e1b18" stroke-width="3" stroke-linecap="round" />
+                    </g>
+
+                    <!-- Ústa -->
+                    <path id="mouth" d="M66 84 Q80 84 94 84" fill="none" stroke="#1e1b18" stroke-width="3.2" stroke-linecap="round" />
+                </g>
+            </svg>
+
+            <!-- Pohár s drinkom -->
+            <svg id="drink-svg" viewBox="0 0 100 140">
+                <defs>
+                    <clipPath id="glass-clip">
+                        <polygon points="22,35 78,35 66,122 34,122" />
+                    </clipPath>
+                </defs>
+
+                <!-- Tekutina vo vnútri pohára -->
+                <g clip-path="url(#glass-clip)">
+                    <rect id="liquid" x="15" y="55" width="70" height="75" fill="#7c5e3c" style="transition: y 0.6s ease, fill 0.4s ease;" />
+                </g>
+
+                <!-- Obrys pohára -->
+                <polygon points="22,35 78,35 66,122 34,122" fill="rgba(255,255,255,0.12)" stroke="#e6eef8" stroke-width="3" />
+                <!-- Slamka -->
+                <line x1="62" y1="35" x2="74" y2="10" stroke="#ff6b6b" stroke-width="4" stroke-linecap="round" />
+            </svg>
+        </div>
+
+        <div class="drink-meta" id="drink-info">Namixovaný drink: zatiaľ žiadny</div>
     </div>
 
-    <div class="input-group">
-        <input type="text" id="word-input" placeholder="Zadaj slovo (napr. voda, auto, čaj...)" onkeypress="if(event.key==='Enter') sendGuess()">
-        <button onclick="sendGuess()">Skok v čase</button>
+    <div class="input-area">
+        <input id="word-input" type="text" placeholder="Napíš slovo (napr. bager, auto, voda, čaj)..." onkeypress="if(event.key==='Enter') submitGuess()">
+        <button id="guess-btn" onclick="submitGuess()">Namiešať a podať</button>
     </div>
-    <div id="error-msg"></div>
+    <div id="error-box"></div>
 
-    <div class="history-list" id="history-list"></div>
+    <div class="history" id="history"></div>
 </div>
 
 <script>
-    let displayedYear = 1000;
-    let guesses = [];
+    const historyItems = [];
 
-    // Prepočet skóre (0 - 10000) na letopočet (1000 - 2026)
-    function scoreToYear(score) {
-        const startYear = 1000;
-        const targetYear = 2026;
-        const progress = score / 10000;
-        return Math.round(startYear + progress * (targetYear - startYear));
+    function getDrinkSpec(quality, won) {
+        if (won) {
+            return {
+                name: "Zlatý elixír majstra",
+                color: "#ffd166",
+                speech: "Mňam! Presne toto som chcel – dokonalá chuť! (Výhra!)",
+                mood: "happy"
+            };
+        }
+        if (quality >= 75) {
+            return {
+                name: "Karamelovo-korenistý špeciál",
+                color: "#d97706",
+                speech: "Výborné! Tohle už má skvelý šmrnc, sme veľmi blízko!",
+                mood: "happy"
+            };
+        }
+        if (quality >= 40) {
+            return {
+                name: "Bylinkový tonik so štipkou citróna",
+                color: "#4ea8de",
+                speech: "Hm, nie je to zlé, dá sa to piť... už to začína dávať zmysel.",
+                mood: "neutral"
+            };
+        }
+        return {
+            name: "Bahenný vývar s octom",
+            color: "#5c6b28",
+            speech: "Fuj! To chutí ako močiar a ponožky... úplne vedľa!",
+            mood: "yuck"
+        };
     }
 
-    async function sendGuess() {
-        const input = document.getElementById('word-input');
-        const errorBox = document.getElementById('error-msg');
+    function setMood(mood) {
+        const normalEyes = document.getElementById("eyes-normal");
+        const yuckEyes = document.getElementById("eyes-yuck");
+        const happyEyes = document.getElementById("eyes-happy");
+        const mouth = document.getElementById("mouth");
+        const charBody = document.getElementById("char-body");
+
+        normalEyes.style.display = "none";
+        yuckEyes.style.display = "none";
+        happyEyes.style.display = "none";
+        charBody.classList.remove("yuck-shake", "yum-bounce");
+        void charBody.offsetWidth;
+
+        if (mood === "yuck") {
+            yuckEyes.style.display = "block";
+            mouth.setAttribute("d", "M66 91 Q73 82 80 91 Q87 82 94 91"); // zvlnené znechutené ústa
+            mouth.setAttribute("stroke", "#ff6b6b");
+            charBody.classList.add("yuck-shake");
+        } else if (mood === "happy") {
+            happyEyes.style.display = "block";
+            mouth.setAttribute("d", "M64 81 Q80 98 96 81"); // široký úsmev
+            mouth.setAttribute("stroke", "#4ade80");
+            charBody.classList.add("yum-bounce");
+        } else {
+            normalEyes.style.display = "block";
+            mouth.setAttribute("d", "M66 86 Q80 89 94 86"); // mierny úsmev
+            mouth.setAttribute("stroke", "#1e1b18");
+            charBody.classList.add("yum-bounce");
+        }
+    }
+
+    async function submitGuess() {
+        const input = document.getElementById("word-input");
+        const btn = document.getElementById("guess-btn");
+        const errorBox = document.getElementById("error-box");
         const word = input.value.trim();
 
         if (!word) return;
-        errorBox.innerText = "";
+        errorBox.textContent = "";
 
         try {
-            const response = await fetch('/guess', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ word: word })
+            const res = await fetch("/guess", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ word })
             });
+            const data = await res.json();
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                errorBox.innerText = data.error;
+            if (!res.ok) {
+                errorBox.textContent = data.error;
                 return;
             }
 
+            btn.disabled = true;
             input.value = "";
-            const targetYear = scoreToYear(data.score);
 
-            // Animácia pretáčania rokov
-            animateYear(displayedYear, targetYear);
-            displayedYear = targetYear;
+            const spec = getDrinkSpec(data.quality, data.won);
+            const liquid = document.getElementById("liquid");
+            const glass = document.getElementById("drink-svg");
+            const speech = document.getElementById("speech");
+            const info = document.getElementById("drink-info");
 
-            // Zmena atmosféry doby
-            updateEraTheme(targetYear, data.won, data.word);
+            // 1. Naplnenie pohára novým drinkom
+            liquid.setAttribute("fill", spec.color);
+            liquid.setAttribute("y", "45");
+            info.textContent = `Drink: ${spec.name} | Kvalita: ${data.quality}/100 | Poradie #${data.rank}/${data.total}`;
+            speech.textContent = `Miešam „${spec.name}“ a podávam...`;
 
-            // Uloženie do histórie a zoradenie od najmodernejšieho roku
-            guesses.push({
-                word: data.word,
-                year: targetYear,
-                score: data.score,
-                rank: data.rank,
-                won: data.won
-            });
-            guesses.sort((a, b) => b.year - a.year);
-            renderHistory();
+            // 2. Animácia pitia (naklonenie pohára + úbytok hladiny)
+            glass.classList.remove("drinking-glass");
+            void glass.offsetWidth;
+            glass.classList.add("drinking-glass");
 
-        } catch (err) {
-            errorBox.innerText = "Chyba spojenia so serverom.";
-        }
-    }
+            setTimeout(() => {
+                liquid.setAttribute("y", "95");
+            }, 400);
 
-    function animateYear(start, end) {
-        const el = document.getElementById('year-display');
-        const duration = 600;
-        const startTime = performance.now();
+            // 3. Reakcia postavičky po dopití
+            setTimeout(() => {
+                setMood(spec.mood);
+                speech.textContent = spec.speech;
+                speech.classList.add("pop");
+                setTimeout(() => speech.classList.remove("pop"), 250);
 
-        function update(now) {
-            const elapsed = now - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            // Plynulé spomalenie na konci (ease-out)
-            const ease = 1 - Math.pow(1 - progress, 3);
-            const current = Math.round(start + (end - start) * ease);
-            el.innerText = current;
+                historyItems.unshift({
+                    word: data.word,
+                    drink: spec.name,
+                    quality: data.quality,
+                    rank: data.rank
+                });
+                renderHistory();
+                btn.disabled = false;
+                input.focus();
+            }, 1350);
 
-            if (progress < 1) {
-                requestAnimationFrame(update);
-            }
-        }
-        requestAnimationFrame(update);
-    }
-
-    function updateEraTheme(year, won, word) {
-        const root = document.documentElement;
-        const badge = document.getElementById('era-badge');
-        const story = document.getElementById('story-text');
-
-        if (won) {
-            root.style.setProperty('--bg-color', '#062c1e');
-            root.style.setProperty('--accent-color', '#4ade80');
-            badge.innerText = "CIEĽ DOSIAHNUTÝ • SÚČASNOSŤ";
-            story.innerHTML = `<strong>BINGO!</strong> Slovo <strong>„${word}“</strong> ťa prenieslo priamo do roku <strong>2026</strong>! Časostroj je stabilizovaný.`;
-            return;
-        }
-
-        if (year < 1450) {
-            root.style.setProperty('--bg-color', '#1c1610');
-            root.style.setProperty('--accent-color', '#d4a373');
-            badge.innerText = "Vrcholný stredovek";
-            story.innerText = `Slovo „${word}“ ťa nechalo v dobe hradov, rytierov a sviečok. Významovo si ešte veľmi ďaleko.`;
-        } else if (year < 1750) {
-            root.style.setProperty('--bg-color', '#241726');
-            root.style.setProperty('--accent-color', '#c77dff');
-            badge.innerText = "Renesancia a zámorské objavy";
-            story.innerText = `Posunul si sa vpred! Okolo teba vznikajú prvé kníhtlačiarne a plachetnice, ale cieľ je stále v budúcnosti.`;
-        } else if (year < 1900) {
-            root.style.setProperty('--bg-color', '#18222f');
-            root.style.setProperty('--accent-color', '#60a5fa');
-            badge.innerText = "Priemyselná revolúcia";
-            story.innerText = `Cítiš dym parných lokomotív a počuješ stroje! Tvoj tip „${word}“ už začína dávať zmysel.`;
-        } else if (year < 1990) {
-            root.style.setProperty('--bg-color', '#2b192e');
-            root.style.setProperty('--accent-color', '#f472b6');
-            badge.innerText = "20. storočie • Éra elektriny a rádií";
-            story.innerText = `Si veľmi blízko! Okolo teba jazdia autá, svietia neóny a hrajú gramofóny.`;
-        } else {
-            root.style.setProperty('--bg-color', '#0f2936');
-            root.style.setProperty('--accent-color', '#38bdf8');
-            badge.innerText = "Digitálny vek • Na dosah cieľa";
-            story.innerText = `Horíš! Slovo „${word}“ ťa vystrelilo na prah moderného sveta. Stačí už len malý krôčik!`;
+        } catch (e) {
+            errorBox.textContent = "Nepodarilo sa spojiť so serverom.";
+            btn.disabled = false;
         }
     }
 
     function renderHistory() {
-        const list = document.getElementById('history-list');
-        list.innerHTML = guesses.map((g, i) => `
-            <div class="history-item ${i === 0 ? 'best' : ''}">
-                <span><strong>${g.word}</strong> <small>(Poradie #${g.rank})</small></span>
-                <span class="year-pill">ROK ${g.year}</span>
+        const el = document.getElementById("history");
+        el.innerHTML = historyItems.map(item => `
+            <div class="history-row">
+                <span><strong>${item.word}</strong> → ${item.drink}</span>
+                <span>Kvalita: <strong>${item.quality}/100</strong> (#${item.rank})</span>
             </div>
-        `).join('');
+        `).join("");
     }
 </script>
 
 </body>
 </html>
-
