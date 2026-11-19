@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sémantický barman</title>
+    <title>Sémantický Alchymista — Barman</title>
     <style>
         * { box-sizing: border-box; }
 
@@ -11,8 +11,8 @@
             margin: 0;
             min-height: 100vh;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: radial-gradient(circle at top, #2c1e16, #120c08);
-            color: #f5ebe0;
+            background: radial-gradient(circle at 50% 15%, #2b1a3d 0%, #140d1d 55%, #09060d 100%);
+            color: #f7efe2;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -21,47 +21,60 @@
 
         .bar-card {
             width: 100%;
-            max-width: 720px;
-            background: rgba(28, 19, 14, 0.92);
-            border: 2px solid #8c5a32;
-            border-radius: 24px;
+            max-width: 780px;
+            background: rgba(24, 16, 34, 0.94);
+            border: 2px solid #c89b3c;
+            border-radius: 26px;
             padding: 28px;
-            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75);
+            box-shadow: 0 28px 70px rgba(0, 0, 0, 0.85), 0 0 35px rgba(200, 155, 60, 0.15);
             text-align: center;
         }
 
         h1 {
             margin: 0 0 6px;
-            font-size: 2rem;
-            color: #ffca7a;
+            font-size: 2.1rem;
+            letter-spacing: 0.5px;
+            background: linear-gradient(90deg, #ffe39f, #d99b26, #ffe39f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .subtitle {
             margin: 0 0 20px;
-            color: #cbb7a2;
+            color: #cbb9d8;
             font-size: 0.98rem;
         }
 
-        /* Scéna s barovým pultom, postavičkou a drinkom */
         .stage {
             position: relative;
-            background: linear-gradient(180deg, #1a120d 0%, #261911 68%, #4a2c18 68%, #361e0f 100%);
-            border-radius: 18px;
-            padding: 20px 16px 14px;
-            border: 1px solid rgba(255, 202, 122, 0.2);
+            background: linear-gradient(180deg, #160e22 0%, #231536 66%, #3d2318 66%, #26140c 100%);
+            border-radius: 20px;
+            padding: 22px 16px 14px;
+            border: 1px solid rgba(255, 215, 130, 0.25);
             overflow: hidden;
         }
 
+        /* Jemná žiara pozadia pri reakcii */
+        .aura-glow {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s ease, background 0.4s ease;
+        }
+
         .speech-bubble {
+            position: relative;
+            z-index: 2;
             display: inline-block;
-            background: #fff8eb;
-            color: #23160e;
-            padding: 10px 18px;
-            border-radius: 16px;
+            background: #fff7e6;
+            color: #1f1329;
+            padding: 11px 20px;
+            border-radius: 18px;
             font-weight: 600;
             font-size: 1rem;
-            margin-bottom: 10px;
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+            margin-bottom: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
             transition: transform 0.25s ease;
         }
 
@@ -70,65 +83,112 @@
         }
 
         .scene-row {
+            position: relative;
+            z-index: 2;
             display: flex;
             justify-content: center;
             align-items: flex-end;
-            gap: 28px;
-            min-height: 220px;
+            gap: 34px;
+            min-height: 245px;
         }
 
-        svg#character-svg {
-            width: 170px;
-            height: 210px;
+        svg#bartender-svg {
+            width: 195px;
+            height: 235px;
             overflow: visible;
         }
 
-        svg#drink-svg {
-            width: 110px;
-            height: 150px;
-            transform-origin: 50% 80%;
-            transition: transform 0.45s ease;
+        svg#flask-svg {
+            width: 125px;
+            height: 165px;
+            transform-origin: 50% 85%;
+            overflow: visible;
         }
 
-        /* Animácia naklonenia pohára pri pití */
-        .drinking-glass {
-            animation: tiltDrink 1.3s ease-in-out;
+        /* Miešanie elixíru pred napitím */
+        .swirl-flask {
+            animation: swirlMix 0.75s ease-in-out 2;
         }
 
-        @keyframes tiltDrink {
+        @keyframes swirlMix {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(-16deg) scale(1.04); }
+            75% { transform: rotate(16deg) scale(1.04); }
+        }
+
+        /* Pitie z banky */
+        .drink-flask {
+            animation: drinkTilt 1.25s ease-in-out;
+        }
+
+        @keyframes drinkTilt {
             0%   { transform: translate(0, 0) rotate(0deg); }
-            30%  { transform: translate(-45px, -35px) rotate(-38deg); }
-            70%  { transform: translate(-45px, -35px) rotate(-38deg); }
+            30%  { transform: translate(-52px, -42px) rotate(-42deg); }
+            70%  { transform: translate(-52px, -42px) rotate(-42deg); }
             100% { transform: translate(0, 0) rotate(0deg); }
         }
 
-        /* Animácia postavičky pri zlej chuti (otrasenie) */
-        .yuck-shake {
-            animation: yuckAnim 0.6s ease-in-out;
+        /* Zlé chemické reakcie */
+        .react-toxic {
+            animation: toxicShake 0.75s ease-in-out;
         }
 
-        @keyframes yuckAnim {
-            0%, 100% { transform: translateX(0) rotate(0deg); }
-            25% { transform: translateX(-8px) rotate(-3deg); }
-            50% { transform: translateX(8px) rotate(3deg); }
-            75% { transform: translateX(-5px) rotate(-2deg); }
+        @keyframes toxicShake {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            20% { transform: translate(-9px, 2px) rotate(-4deg); }
+            40% { transform: translate(9px, -2px) rotate(4deg); }
+            60% { transform: translate(-7px, -1px) rotate(-3deg); }
+            80% { transform: translate(6px, 2px) rotate(2deg); }
         }
 
-        /* Animácia postavičky pri dobrom drinku (poskočenie) */
-        .yum-bounce {
-            animation: yumAnim 0.65s ease-out;
+        .react-shock {
+            animation: shockBuzz 0.65s linear 2;
         }
 
-        @keyframes yumAnim {
+        @keyframes shockBuzz {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-6px); }
+        }
+
+        /* Neutrálna reakcia */
+        .react-neutral {
+            animation: neutralNod 0.8s ease-in-out;
+        }
+
+        @keyframes neutralNod {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            45% { transform: translateY(4px) rotate(3deg); }
+        }
+
+        /* Dobré chemické reakcie */
+        .react-elixir {
+            animation: elixirFloat 0.9s ease-out;
+        }
+
+        @keyframes elixirFloat {
             0%   { transform: translateY(0) scale(1); }
-            40%  { transform: translateY(-14px) scale(1.04); }
+            45%  { transform: translateY(-18px) scale(1.06); }
             100% { transform: translateY(0) scale(1); }
         }
 
+        .fx-pulse {
+            animation: fxPop 0.9s ease-out forwards;
+        }
+
+        @keyframes fxPop {
+            0%   { opacity: 0; transform: scale(0.6); }
+            35%  { opacity: 1; transform: scale(1.08); }
+            100% { opacity: 0; transform: scale(1.25); }
+        }
+
         .drink-meta {
+            position: relative;
+            z-index: 2;
             margin-top: 10px;
-            font-size: 0.92rem;
-            color: #ffdca8;
+            font-size: 0.93rem;
+            color: #ffe3a8;
         }
 
         .input-area {
@@ -142,14 +202,14 @@
             padding: 13px 16px;
             font-size: 1.05rem;
             border-radius: 12px;
-            border: 2px solid #8c5a32;
-            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid #7d5824;
+            background: rgba(255, 255, 255, 0.07);
             color: #fff;
             outline: none;
         }
 
         input:focus {
-            border-color: #ffca7a;
+            border-color: #f4c459;
         }
 
         button {
@@ -158,14 +218,14 @@
             font-weight: 700;
             border: none;
             border-radius: 12px;
-            background: #ffca7a;
-            color: #231409;
+            background: linear-gradient(135deg, #f6ca63, #d19324);
+            color: #1b1024;
             cursor: pointer;
-            transition: transform 0.12s ease, background 0.2s ease;
+            transition: transform 0.12s ease, filter 0.2s ease;
         }
 
         button:hover:not(:disabled) {
-            background: #ffd99e;
+            filter: brightness(1.08);
         }
 
         button:active:not(:disabled) {
@@ -179,7 +239,7 @@
 
         #error-box {
             min-height: 22px;
-            color: #ff7b7b;
+            color: #ff7b8e;
             font-size: 0.92rem;
             margin-top: 8px;
         }
@@ -187,7 +247,7 @@
         .history {
             margin-top: 16px;
             text-align: left;
-            max-height: 170px;
+            max-height: 175px;
             overflow-y: auto;
             border-top: 1px solid rgba(255, 255, 255, 0.12);
             padding-top: 12px;
@@ -196,6 +256,7 @@
         .history-row {
             display: flex;
             justify-content: space-between;
+            gap: 12px;
             padding: 8px 12px;
             margin-bottom: 6px;
             border-radius: 8px;
@@ -207,70 +268,97 @@
 <body>
 
 <div class="bar-card">
-    <h1>Sémantický barman</h1>
-    <p class="subtitle">Tipni slovo – čím bližšie si k cieľu, tým lepší drink namixujem a zákazník si pochutí.</p>
+    <h1>Sémantický Alchymista</h1>
+    <p class="subtitle">Každý tip namieša iný elixír – zlý spustí nepríjemnú reakciu, priemerný neutrálnu a dobrý alchymistický zázrak.</p>
 
     <div class="stage">
-        <div class="speech-bubble" id="speech">Zadaj prvé slovo a namiešam ti prvý drink!</div>
+        <div class="aura-glow" id="aura-glow"></div>
+        <div class="speech-bubble" id="speech">Zadaj prvé slovo a nechám prebublať prvý elixír!</div>
 
         <div class="scene-row">
-            <!-- Postavička -->
-            <svg id="character-svg" viewBox="0 0 160 200">
-                <g id="char-body">
-                    <!-- Trup -->
-                    <rect x="42" y="112" width="76" height="75" rx="22" fill="#3d5a80" />
-                    <!-- Hlava -->
-                    <circle cx="80" cy="68" r="38" fill="#f4c095" />
-                    <!-- Vlasy -->
-                    <path d="M44 58 Q80 20 116 58 Q106 36 80 36 Q54 36 44 58 Z" fill="#3b2314" />
+            <!-- Fancy čašník-alchymista -->
+            <svg id="bartender-svg" viewBox="0 0 180 220">
+                <g id="bar-char">
+                    <!-- Trup / vesta -->
+                    <rect x="46" y="122" width="88" height="82" rx="24" fill="#4a1f6b" />
+                    <path d="M90 122 L72 165 L90 204 L108 165 Z" fill="#f7efe2" />
+                    <!-- Motýlik -->
+                    <polygon points="90,134 74,127 74,141" fill="#e63946" />
+                    <polygon points="90,134 106,127 106,141" fill="#e63946" />
+                    <circle cx="90" cy="134" r="4" fill="#ffd166" />
 
-                    <!-- Ľavé a pravé oko -->
+                    <!-- Hlava -->
+                    <circle cx="90" cy="82" r="36" fill="#f5c69c" />
+                    <!-- Jemné líca -->
+                    <circle cx="64" cy="90" r="5" fill="#e8998d" opacity="0.55" />
+                    <circle cx="116" cy="90" r="5" fill="#e8998d" opacity="0.55" />
+
+                    <!-- Fancy cylindr -->
+                    <rect x="50" y="20" width="80" height="34" rx="5" fill="#1e132b" stroke="#d99b26" stroke-width="2" />
+                    <rect x="50" y="45" width="80" height="9" fill="#d99b26" />
+                    <rect x="38" y="52" width="104" height="7" rx="3.5" fill="#1e132b" />
+
+                    <!-- Oči – normálne -->
                     <g id="eyes-normal">
-                        <circle cx="66" cy="65" r="4.5" fill="#1e1b18" />
-                        <circle cx="94" cy="65" r="4.5" fill="#1e1b18" />
+                        <circle cx="76" cy="78" r="4.5" fill="#1a1221" />
+                        <circle cx="104" cy="78" r="4.5" fill="#1a1221" />
+                        <circle cx="77.5" cy="76.5" r="1.5" fill="#fff" />
+                        <circle cx="105.5" cy="76.5" r="1.5" fill="#fff" />
                     </g>
-                    <!-- Znechutené / privreté oči -->
-                    <g id="eyes-yuck" style="display:none;">
-                        <path d="M59 62 L72 68 L59 71" fill="none" stroke="#1e1b18" stroke-width="3" stroke-linecap="round" />
-                        <path d="M101 62 L88 68 L101 71" fill="none" stroke="#1e1b18" stroke-width="3" stroke-linecap="round" />
+
+                    <!-- Oči – zlá reakcia (X / krivé) -->
+                    <g id="eyes-bad" style="display:none;">
+                        <path d="M70 73 L82 83 M82 73 L70 83" stroke="#ff4d6d" stroke-width="3" stroke-linecap="round" />
+                        <path d="M98 73 L110 83 M110 73 L98 83" stroke="#ff4d6d" stroke-width="3" stroke-linecap="round" />
                     </g>
-                    <!-- Šťastné oči (oblúčiky) -->
-                    <g id="eyes-happy" style="display:none;">
-                        <path d="M59 67 Q66 58 73 67" fill="none" stroke="#1e1b18" stroke-width="3" stroke-linecap="round" />
-                        <path d="M87 67 Q94 58 101 67" fill="none" stroke="#1e1b18" stroke-width="3" stroke-linecap="round" />
+
+                    <!-- Oči – šťastná reakcia -->
+                    <g id="eyes-good" style="display:none;">
+                        <path d="M70 80 Q76 71 82 80" fill="none" stroke="#1a1221" stroke-width="3" stroke-linecap="round" />
+                        <path d="M98 80 Q104 71 110 80" fill="none" stroke="#1a1221" stroke-width="3" stroke-linecap="round" />
                     </g>
 
                     <!-- Ústa -->
-                    <path id="mouth" d="M66 84 Q80 84 94 84" fill="none" stroke="#1e1b18" stroke-width="3.2" stroke-linecap="round" />
+                    <path id="mouth" d="M76 98 Q90 101 104 98" fill="none" stroke="#1a1221" stroke-width="3.2" stroke-linecap="round" />
+
+                    <!-- Efekty okolo čašníka -->
+                    <g id="char-fx" style="opacity:0;"></g>
                 </g>
             </svg>
 
-            <!-- Pohár s drinkom -->
-            <svg id="drink-svg" viewBox="0 0 100 140">
+            <!-- Alchymistická banka s elixírom -->
+            <svg id="flask-svg" viewBox="0 0 110 150">
                 <defs>
-                    <clipPath id="glass-clip">
-                        <polygon points="22,35 78,35 66,122 34,122" />
+                    <clipPath id="flask-clip">
+                        <path d="M44 26 L66 26 L66 56 L95 112 Q99 124 86 126 L24 126 Q11 124 15 112 L44 56 Z" />
                     </clipPath>
                 </defs>
 
-                <!-- Tekutina vo vnútri pohára -->
-                <g clip-path="url(#glass-clip)">
-                    <rect id="liquid" x="15" y="55" width="70" height="75" fill="#7c5e3c" style="transition: y 0.6s ease, fill 0.4s ease;" />
+                <!-- Tekutina -->
+                <g clip-path="url(#flask-clip)">
+                    <rect id="flask-liquid" x="5" y="65" width="100" height="70" fill="#7c5e3c" style="transition: y 0.6s ease, fill 0.4s ease;" />
+                    <circle cx="42" cy="95" r="4" fill="rgba(255,255,255,0.4)" />
+                    <circle cx="63" cy="108" r="5.5" fill="rgba(255,255,255,0.35)" />
+                    <circle cx="54" cy="84" r="3" fill="rgba(255,255,255,0.45)" />
                 </g>
 
-                <!-- Obrys pohára -->
-                <polygon points="22,35 78,35 66,122 34,122" fill="rgba(255,255,255,0.12)" stroke="#e6eef8" stroke-width="3" />
-                <!-- Slamka -->
-                <line x1="62" y1="35" x2="74" y2="10" stroke="#ff6b6b" stroke-width="4" stroke-linecap="round" />
+                <!-- Sklenená banka -->
+                <path d="M44 26 L66 26 L66 56 L95 112 Q99 124 86 126 L24 126 Q11 124 15 112 L44 56 Z"
+                      fill="rgba(255,255,255,0.10)" stroke="#e9d8f5" stroke-width="3" />
+                <!-- Zátka / hrdlo -->
+                <rect x="40" y="18" width="30" height="9" rx="3" fill="#b07d4f" />
+
+                <!-- Efekty pri banke -->
+                <g id="flask-fx" style="opacity:0;"></g>
             </svg>
         </div>
 
-        <div class="drink-meta" id="drink-info">Namixovaný drink: zatiaľ žiadny</div>
+        <div class="drink-meta" id="drink-info">Elixír: zatiaľ nenamiešaný</div>
     </div>
 
     <div class="input-area">
-        <input id="word-input" type="text" placeholder="Napíš slovo (napr. bager, auto, voda, čaj)..." onkeypress="if(event.key==='Enter') submitGuess()">
-        <button id="guess-btn" onclick="submitGuess()">Namiešať a podať</button>
+        <input id="word-input" type="text" placeholder="Zadaj slovo (napr. bager, auto, voda, čaj, espresso)..." onkeypress="if(event.key==='Enter') submitGuess()">
+        <button id="guess-btn" onclick="submitGuess()">Namiešať</button>
     </div>
     <div id="error-box"></div>
 
@@ -279,69 +367,127 @@
 
 <script>
     const historyItems = [];
+    let badIndex = 0;
+    let goodIndex = 0;
 
-    function getDrinkSpec(quality, won) {
-        if (won) {
+    function pickReaction(quality, won) {
+        if (quality < 40) {
+            const badReactions = [
+                {
+                    name: "Toxický bahenný vývar",
+                    color: "#65a30d",
+                    aura: "rgba(101, 163, 13, 0.24)",
+                    charAnim: "react-toxic",
+                    mood: "bad",
+                    mouth: "M74 105 Q82 96 90 105 Q98 96 106 105",
+                    mouthColor: "#70e000",
+                    speech: "Bleee! Zelené výpary mi stúpajú do hlavy – úplne zlý výber!",
+                    charFx: `<circle cx="35" cy="55" r="7" fill="#84cc16" opacity="0.7"/><circle cx="145" cy="48" r="9" fill="#65a30d" opacity="0.65"/><text x="122" y="34" fill="#a3e635" font-size="14" font-weight="bold">☠</text>`,
+                    flaskFx: `<circle cx="55" cy="10" r="8" fill="#84cc16" opacity="0.75"/><circle cx="72" cy="4" r="5" fill="#bef264" opacity="0.7"/>`
+                },
+                {
+                    name: "Prskajúca kyselina s octom",
+                    color: "#a855f7",
+                    aura: "rgba(168, 85, 247, 0.25)",
+                    charAnim: "react-shock",
+                    mood: "bad",
+                    mouth: "M76 106 Q90 95 104 106",
+                    mouthColor: "#e879f9",
+                    speech: "Au! Fialová iskra ma kopla do jazyka – toto nie je ono!",
+                    charFx: `<path d="M24 68 L38 62 L30 74 L44 70" fill="none" stroke="#e879f9" stroke-width="2.5"/><path d="M156 66 L142 60 L150 72 L136 68" fill="none" stroke="#c084fc" stroke-width="2.5"/>`,
+                    flaskFx: `<path d="M55 15 L45 2 L62 6 Z" fill="#e879f9"/>`
+                },
+                {
+                    name: "Kriedový odvar z kamenia",
+                    color: "#64748b",
+                    aura: "rgba(148, 163, 184, 0.22)",
+                    charAnim: "react-toxic",
+                    mood: "bad",
+                    mouth: "M75 104 L105 104",
+                    mouthColor: "#cbd5e1",
+                    speech: "Chrumká to ako piesok... sémanticky sme ďaleko v zlej zóne.",
+                    charFx: `<circle cx="32" cy="82" r="5" fill="#94a3b8"/><circle cx="148" cy="86" r="6" fill="#cbd5e1"/>`,
+                    flaskFx: `<circle cx="48" cy="8" r="6" fill="#cbd5e1"/>`
+                }
+            ];
+            const chosen = badReactions[badIndex % badReactions.length];
+            badIndex++;
+            return chosen;
+        }
+
+        if (quality < 75) {
             return {
-                name: "Zlatý elixír majstra",
-                color: "#ffd166",
-                speech: "Mňam! Presne toto som chcel – dokonalá chuť! (Výhra!)",
-                mood: "happy"
+                name: "Jemný mesačný tonik",
+                color: "#38bdf8",
+                aura: "rgba(56, 189, 248, 0.18)",
+                charAnim: "react-neutral",
+                mood: "normal",
+                mouth: "M77 98 Q90 102 103 98",
+                mouthColor: "#bae6fd",
+                speech: "Hm... zaujímavá zmes. Niečo v tom už cítiť, ale ešte to chce doladiť.",
+                charFx: `<text x="128" y="42" fill="#7dd3fc" font-size="15" font-weight="bold">?</text>`,
+                flaskFx: `<circle cx="60" cy="10" r="5" fill="#7dd3fc" opacity="0.7"/>`
             };
         }
-        if (quality >= 75) {
-            return {
-                name: "Karamelovo-korenistý špeciál",
-                color: "#d97706",
-                speech: "Výborné! Tohle už má skvelý šmrnc, sme veľmi blízko!",
-                mood: "happy"
-            };
-        }
-        if (quality >= 40) {
-            return {
-                name: "Bylinkový tonik so štipkou citróna",
-                color: "#4ea8de",
-                speech: "Hm, nie je to zlé, dá sa to piť... už to začína dávať zmysel.",
-                mood: "neutral"
-            };
-        }
-        return {
-            name: "Bahenný vývar s octom",
-            color: "#5c6b28",
-            speech: "Fuj! To chutí ako močiar a ponožky... úplne vedľa!",
-            mood: "yuck"
-        };
+
+        const goodReactions = [
+            {
+                name: "Zlatý sémantický nektár",
+                color: "#fbbf24",
+                aura: "rgba(251, 191, 36, 0.28)",
+                charAnim: "react-elixir",
+                mood: "good",
+                mouth: "M72 95 Q90 113 108 95",
+                mouthColor: "#fde047",
+                speech: won
+                    ? "BINGO! Dokonalý elixír – práve si trafil cieľové slovo!"
+                    : "Paráda! Zlatá harmónia chutí, sme už len krôčik od cieľa!",
+                charFx: `<text x="26" y="44" fill="#fde047" font-size="16">✦</text><text x="138" y="42" fill="#fde047" font-size="16">✦</text><text x="84" y="14" fill="#fef08a" font-size="14">★</text>`,
+                flaskFx: `<text x="48" y="12" fill="#fde047" font-size="15">✦</text>`
+            },
+            {
+                name: "Tyrkysová esencie inšpirácie",
+                color: "#2dd4bf",
+                aura: "rgba(45, 212, 191, 0.26)",
+                charAnim: "react-elixir",
+                mood: "good",
+                mouth: "M72 95 Q90 112 108 95",
+                mouthColor: "#5eead4",
+                speech: won
+                    ? "Výhra! Tyrkysový zázrak – presne to som chcel ochutnať!"
+                    : "Svieža a silná reakcia! Tvoj tip ma vedie správnym smerom.",
+                charFx: `<text x="28" y="48" fill="#5eead4" font-size="15">✧</text><text x="136" y="46" fill="#5eead4" font-size="15">✧</text>`,
+                flaskFx: `<text x="48" y="12" fill="#5eead4" font-size="15">✧</text>`
+            }
+        ];
+        const chosen = goodReactions[goodIndex % goodReactions.length];
+        goodIndex++;
+        return chosen;
     }
 
-    function setMood(mood) {
+    function applyMood(mood, mouthPath, mouthColor, charFxHtml) {
         const normalEyes = document.getElementById("eyes-normal");
-        const yuckEyes = document.getElementById("eyes-yuck");
-        const happyEyes = document.getElementById("eyes-happy");
+        const badEyes = document.getElementById("eyes-bad");
+        const goodEyes = document.getElementById("eyes-good");
         const mouth = document.getElementById("mouth");
-        const charBody = document.getElementById("char-body");
+        const charFx = document.getElementById("char-fx");
 
         normalEyes.style.display = "none";
-        yuckEyes.style.display = "none";
-        happyEyes.style.display = "none";
-        charBody.classList.remove("yuck-shake", "yum-bounce");
-        void charBody.offsetWidth;
+        badEyes.style.display = "none";
+        goodEyes.style.display = "none";
 
-        if (mood === "yuck") {
-            yuckEyes.style.display = "block";
-            mouth.setAttribute("d", "M66 91 Q73 82 80 91 Q87 82 94 91"); // zvlnené znechutené ústa
-            mouth.setAttribute("stroke", "#ff6b6b");
-            charBody.classList.add("yuck-shake");
-        } else if (mood === "happy") {
-            happyEyes.style.display = "block";
-            mouth.setAttribute("d", "M64 81 Q80 98 96 81"); // široký úsmev
-            mouth.setAttribute("stroke", "#4ade80");
-            charBody.classList.add("yum-bounce");
-        } else {
-            normalEyes.style.display = "block";
-            mouth.setAttribute("d", "M66 86 Q80 89 94 86"); // mierny úsmev
-            mouth.setAttribute("stroke", "#1e1b18");
-            charBody.classList.add("yum-bounce");
-        }
+        if (mood === "bad") badEyes.style.display = "block";
+        else if (mood === "good") goodEyes.style.display = "block";
+        else normalEyes.style.display = "block";
+
+        mouth.setAttribute("d", mouthPath);
+        mouth.setAttribute("stroke", mouthColor);
+
+        charFx.innerHTML = charFxHtml;
+        charFx.style.opacity = "1";
+        charFx.classList.remove("fx-pulse");
+        void charFx.offsetWidth;
+        charFx.classList.add("fx-pulse");
     }
 
     async function submitGuess() {
@@ -369,44 +515,69 @@
             btn.disabled = true;
             input.value = "";
 
-            const spec = getDrinkSpec(data.quality, data.won);
-            const liquid = document.getElementById("liquid");
-            const glass = document.getElementById("drink-svg");
+            const rxn = pickReaction(data.quality, data.won);
+            const liquid = document.getElementById("flask-liquid");
+            const flask = document.getElementById("flask-svg");
+            const flaskFx = document.getElementById("flask-fx");
+            const barChar = document.getElementById("bar-char");
             const speech = document.getElementById("speech");
             const info = document.getElementById("drink-info");
+            const aura = document.getElementById("aura-glow");
 
-            // 1. Naplnenie pohára novým drinkom
-            liquid.setAttribute("fill", spec.color);
-            liquid.setAttribute("y", "45");
-            info.textContent = `Drink: ${spec.name} | Kvalita: ${data.quality}/100 | Poradie #${data.rank}/${data.total}`;
-            speech.textContent = `Miešam „${spec.name}“ a podávam...`;
+            // 1. Namiešanie elixíru a zamiešanie bankou
+            liquid.setAttribute("fill", rxn.color);
+            liquid.setAttribute("y", "58");
+            info.textContent = `Elixír: ${rxn.name} | Kvalita: ${data.quality}/100 | Poradie #${data.rank}/${data.total}`;
+            speech.textContent = `Miešam „${rxn.name}“...`;
 
-            // 2. Animácia pitia (naklonenie pohára + úbytok hladiny)
-            glass.classList.remove("drinking-glass");
-            void glass.offsetWidth;
-            glass.classList.add("drinking-glass");
+            flask.classList.remove("swirl-flask", "drink-flask");
+            void flask.offsetWidth;
+            flask.classList.add("swirl-flask");
 
+            // 2. Napitie sa po zamiešaní
             setTimeout(() => {
-                liquid.setAttribute("y", "95");
-            }, 400);
+                speech.textContent = "Čašník si odpíja...";
+                flask.classList.remove("swirl-flask");
+                void flask.offsetWidth;
+                flask.classList.add("drink-flask");
 
-            // 3. Reakcia postavičky po dopití
+                setTimeout(() => {
+                    liquid.setAttribute("y", "105");
+                }, 400);
+            }, 1450);
+
+            // 3. Chemická reakcia po dopití
             setTimeout(() => {
-                setMood(spec.mood);
-                speech.textContent = spec.speech;
+                aura.style.background = `radial-gradient(circle at 60% 50%, ${rxn.aura}, transparent 70%)`;
+                aura.style.opacity = "1";
+
+                flaskFx.innerHTML = rxn.flaskFx;
+                flaskFx.style.opacity = "1";
+                flaskFx.classList.remove("fx-pulse");
+                void flaskFx.offsetWidth;
+                flaskFx.classList.add("fx-pulse");
+
+                barChar.classList.remove("react-toxic", "react-shock", "react-neutral", "react-elixir");
+                void barChar.offsetWidth;
+                barChar.classList.add(rxn.charAnim);
+
+                applyMood(rxn.mood, rxn.mouth, rxn.mouthColor, rxn.charFx);
+
+                speech.textContent = rxn.speech;
                 speech.classList.add("pop");
                 setTimeout(() => speech.classList.remove("pop"), 250);
 
                 historyItems.unshift({
                     word: data.word,
-                    drink: spec.name,
+                    elixir: rxn.name,
                     quality: data.quality,
                     rank: data.rank
                 });
                 renderHistory();
+
                 btn.disabled = false;
                 input.focus();
-            }, 1350);
+            }, 2750);
 
         } catch (e) {
             errorBox.textContent = "Nepodarilo sa spojiť so serverom.";
@@ -418,7 +589,7 @@
         const el = document.getElementById("history");
         el.innerHTML = historyItems.map(item => `
             <div class="history-row">
-                <span><strong>${item.word}</strong> → ${item.drink}</span>
+                <span><strong>${item.word}</strong> → ${item.elixir}</span>
                 <span>Kvalita: <strong>${item.quality}/100</strong> (#${item.rank})</span>
             </div>
         `).join("");
