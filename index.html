@@ -6,16 +6,13 @@
     <title>Sémantický barman</title>
     <style>
         :root {
-            --bg: #11100f;
-            --panel: #191715;
-            --panel-2: #221f1c;
-            --ink: #f2ece1;
-            --muted: #9e9486;
-            --line: #322d28;
-            --amber: #df8d2d;
-            --bad: #7bc936;
-            --mid: #d9a738;
-            --good: #38bdf8;
+            --bg: #12100e;
+            --surface: #1b1815;
+            --surface-2: #24201c;
+            --ink: #f3ece0;
+            --muted: #a39787;
+            --line: #36302a;
+            --accent: #df8d2d;
         }
 
         * {
@@ -36,8 +33,8 @@
 
         .shell {
             width: 100%;
-            max-width: 960px;
-            background: var(--panel);
+            max-width: 980px;
+            background: var(--surface);
             border: 1px solid var(--line);
             border-radius: 14px;
             overflow: hidden;
@@ -50,7 +47,7 @@
             justify-content: space-between;
             gap: 12px;
             padding: 14px 20px;
-            background: var(--panel-2);
+            background: var(--surface-2);
             border-bottom: 1px solid var(--line);
         }
 
@@ -81,7 +78,7 @@
         .round-txt {
             font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
             font-size: 0.82rem;
-            color: var(--amber);
+            color: var(--accent);
         }
 
         .btn-sub {
@@ -96,13 +93,13 @@
         }
 
         .btn-sub:hover:not(:disabled) {
-            border-color: #554c43;
+            border-color: #5a5046;
             background: rgba(255, 255, 255, 0.03);
         }
 
         .grid {
             display: grid;
-            grid-template-columns: 1.25fr 0.95fr;
+            grid-template-columns: 1.28fr 0.92fr;
         }
 
         @media (max-width: 820px) {
@@ -127,8 +124,8 @@
         canvas#bar-canvas {
             display: block;
             width: 100%;
-            height: 390px;
-            background: #14110f;
+            height: 400px;
+            background: #161210;
         }
 
         .caption {
@@ -183,7 +180,7 @@
         }
 
         input[type="text"]:focus {
-            border-color: var(--amber);
+            border-color: var(--accent);
         }
 
         .btn-main {
@@ -191,7 +188,7 @@
             font-size: 0.92rem;
             font-weight: 700;
             color: #16110c;
-            background: var(--amber);
+            background: var(--accent);
             border: none;
             border-radius: 8px;
             cursor: pointer;
@@ -227,7 +224,7 @@
 
         .log-list {
             flex: 1;
-            max-height: 215px;
+            max-height: 220px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
@@ -241,7 +238,7 @@
             gap: 10px;
             padding: 8px 10px;
             border-radius: 7px;
-            background: var(--panel-2);
+            background: var(--surface-2);
             border: 1px solid rgba(255, 255, 255, 0.04);
             font-size: 0.85rem;
         }
@@ -268,7 +265,7 @@
     <div class="top">
         <div class="title-wrap">
             <h1>Sémantický barman</h1>
-            <span class="meta-tag">offline canvas · kosínusová podobnosť</span>
+            <span class="meta-tag">2D profil · kosínusová podobnosť</span>
         </div>
         <div class="actions">
             <span class="round-txt" id="round-txt">Kolo #1</span>
@@ -278,7 +275,7 @@
 
     <div class="grid">
         <div class="stage-col">
-            <canvas id="bar-canvas" width="540" height="390"></canvas>
+            <canvas id="bar-canvas" width="560" height="400"></canvas>
             <div class="caption">
                 <div id="status-main">Zadaj slovo a barman namieša prvý drink.</div>
                 <div id="status-sub">Čaká na tip · kvalita 0–100</div>
@@ -322,8 +319,10 @@
     let phaseStart = performance.now();
     let mood = "idle"; // idle | bad | mid | good
     let drinkColor = "#d98a2b";
-    let liquidLevel = 0.72;
+    let liquidRatio = 0.72;
     let particles = [];
+
+    const INK = "#18120e";
 
     function resizeCanvas() {
         const rect = canvas.getBoundingClientRect();
@@ -342,467 +341,99 @@
         phaseStart = performance.now();
     }
 
-    function spawnParticles(color, count) {
+    function spawnParticles(color, count, originX, originY) {
         for (let i = 0; i < count; i++) {
             particles.push({
-                x: 245 + (Math.random() - 0.5) * 90,
-                y: 165 + (Math.random() - 0.5) * 40,
-                vx: (Math.random() - 0.5) * 110,
-                vy: -45 - Math.random() * 95,
-                r: 3 + Math.random() * 3.5,
+                x: originX + (Math.random() - 0.5) * 34,
+                y: originY + (Math.random() - 0.5) * 24,
+                vx: (Math.random() - 0.5) * 95,
+                vy: -40 - Math.random() * 85,
+                r: 2.5 + Math.random() * 3,
                 life: 1.0,
                 color
             });
         }
     }
 
-    function drawShadedCylinder(x, y, topW, botW, h, baseColor, darkColor, lightColor) {
-        const grad = ctx.createLinearGradient(x - topW / 2, 0, x + topW / 2, 0);
-        grad.addColorStop(0, darkColor);
-        grad.addColorStop(0.35, baseColor);
-        grad.addColorStop(0.72, lightColor);
-        grad.addColorStop(1, darkColor);
+    function drawBackgroundBottles(counterY, w) {
+        // Jemná polička s fľašami v pozadí pre hĺbku scény
+        const shelfY = counterY - 122;
+        ctx.fillStyle = "#2b1d14";
+        ctx.fillRect(28, shelfY, w - 56, 7);
 
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.moveTo(x - topW / 2, y);
-        ctx.lineTo(x + topW / 2, y);
-        ctx.lineTo(x + botW / 2, y + h);
-        ctx.lineTo(x - botW / 2, y + h);
-        ctx.closePath();
-        ctx.fill();
+        const bottleSpecs = [
+            { x: 64, h: 52, w: 16, col: "#3d6b4c" },
+            { x: 88, h: 44, w: 14, col: "#8c4a27" },
+            { x: 112, h: 58, w: 17, col: "#2f4e6e" },
+            { x: 410, h: 50, w: 15, col: "#7a3b2e" },
+            { x: 434, h: 42, w: 14, col: "#5c6b3c" }
+        ];
 
-        // Horná elipsa pre hĺbku
-        ctx.fillStyle = lightColor;
-        ctx.beginPath();
-        ctx.ellipse(x, y, topW / 2, Math.max(3, topW * 0.14), 0, 0, Math.PI * 2);
-        ctx.fill();
+        for (const b of bottleSpecs) {
+            ctx.fillStyle = b.col;
+            ctx.strokeStyle = "#120c08";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(b.x - b.w / 2, shelfY - b.h, b.w, b.h, 3);
+            ctx.fill();
+            ctx.stroke();
+
+            // Hrdlo fľaše
+            ctx.fillRect(b.x - 4, shelfY - b.h - 10, 8, 10);
+        }
     }
 
-    function drawBartender(x, y, headTurn, bodyTilt, bobY, currentMood) {
+    // Ručne kreslený profil barmana otočeného doprava (smerom k pultu a shakeru)
+    function drawBartenderProfile(x, y, headNod, headTurn, bodyTilt, bobY, armAngle, currentMood) {
         ctx.save();
         ctx.translate(x, y + bobY);
         ctx.rotate(bodyTilt);
 
-        // Kontaktný tieň na pulte
-        ctx.fillStyle = "rgba(0, 0, 0, 0.42)";
+        // Tieň na pulte
+        ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
         ctx.beginPath();
-        ctx.ellipse(0, 0, 54, 11, 0, 0, Math.PI * 2);
+        ctx.ellipse(6, 2, 56, 9, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Trup / sako so šrafovaním a tieňom
-        drawShadedCylinder(0, -108, 66, 78, 96, "#2c3540", "#171c22", "#475566");
-
-        // Biela zástera / golier v strede
-        ctx.fillStyle = "#e6dfd3";
-        ctx.beginPath();
-        ctx.moveTo(-16, -106);
-        ctx.lineTo(16, -106);
-        ctx.lineTo(22, -12);
-        ctx.lineTo(-22, -12);
-        ctx.closePath();
-        ctx.fill();
-
-        // Motýlik
-        ctx.fillStyle = "#c97b28";
-        ctx.beginPath();
-        ctx.moveTo(0, -94);
-        ctx.lineTo(-14, -101);
-        ctx.lineTo(-14, -87);
-        ctx.closePath();
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(0, -94);
-        ctx.lineTo(14, -101);
-        ctx.lineTo(14, -87);
-        ctx.closePath();
-        ctx.fill();
-
-        // Ruky
-        ctx.strokeStyle = "#2c3540";
-        ctx.lineWidth = 14;
-        ctx.lineCap = "round";
-        ctx.beginPath();
-        ctx.moveTo(-38, -96);
-        ctx.lineTo(-52, -48);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(38, -96);
-        ctx.lineTo(56, -54);
-        ctx.stroke();
-
-        // Hlava s paralaxou otáčania
-        ctx.save();
-        ctx.translate(headTurn * 10, -142);
-
-        const headGrad = ctx.createRadialGradient(-9, -10, 4, 0, 0, 36);
-        headGrad.addColorStop(0, "#f5caa2");
-        headGrad.addColorStop(0.75, "#dfa87b");
-        headGrad.addColorStop(1, "#b88056");
-        ctx.fillStyle = headGrad;
-        ctx.beginPath();
-        ctx.arc(0, 0, 33, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Klobúk s objemom
-        ctx.fillStyle = "#1a1715";
-        ctx.beginPath();
-        ctx.ellipse(0, -26, 46, 8, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        drawShadedCylinder(0, -56, 40, 44, 30, "#231f1c", "#110f0d", "#3c3530");
-
-        // Zlatý pásik na klobúku
-        ctx.fillStyle = "#c97b28";
-        ctx.fillRect(-21, -33, 42, 6);
-
-        // Oči posunuté podľa smeru pohľadu
-        const eyeShiftX = headTurn * 6;
-        ctx.fillStyle = "#171412";
-        if (currentMood === "bad") {
-            ctx.strokeStyle = "#c9184a";
-            ctx.lineWidth = 2.6;
-            ctx.beginPath();
-            ctx.moveTo(-15 + eyeShiftX, -5);
-            ctx.lineTo(-7 + eyeShiftX, 3);
-            ctx.moveTo(-7 + eyeShiftX, -5);
-            ctx.lineTo(-15 + eyeShiftX, 3);
-            ctx.moveTo(7 + eyeShiftX, -5);
-            ctx.lineTo(15 + eyeShiftX, 3);
-            ctx.moveTo(15 + eyeShiftX, -5);
-            ctx.lineTo(7 + eyeShiftX, 3);
-            ctx.stroke();
-        } else {
-            ctx.beginPath();
-            ctx.arc(-11 + eyeShiftX, -2, 3.8, 0, Math.PI * 2);
-            ctx.arc(11 + eyeShiftX, -2, 3.8, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        // Ústa
-        ctx.strokeStyle = currentMood === "bad" ? "#76c800" : "#241612";
+        // Trup / vesta + biela košeľa v bočnom profile
+        ctx.fillStyle = "#252c34";
+        ctx.strokeStyle = INK;
         ctx.lineWidth = 3;
-        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
         ctx.beginPath();
-        if (currentMood === "good") {
-            ctx.arc(0 + eyeShiftX, 9, 10, 0.15 * Math.PI, 0.85 * Math.PI);
-        } else if (currentMood === "bad") {
-            ctx.moveTo(-11 + eyeShiftX, 15);
-            ctx.quadraticCurveTo(-5 + eyeShiftX, 8, 0 + eyeShiftX, 15);
-            ctx.quadraticCurveTo(5 + eyeShiftX, 8, 11 + eyeShiftX, 15);
-        } else {
-            ctx.moveTo(-9 + eyeShiftX, 13);
-            ctx.lineTo(9 + eyeShiftX, 13);
-        }
+        ctx.moveTo(-34, 0);
+        ctx.quadraticCurveTo(-38, -58, -22, -96);
+        ctx.quadraticCurveTo(4, -104, 24, -92);
+        ctx.quadraticCurveTo(36, -54, 30, 0);
+        ctx.closePath();
+        ctx.fill();
         ctx.stroke();
 
-        ctx.restore();
-        ctx.restore();
-    }
+        // Predná biela košeľa a traky
+        ctx.fillStyle = "#ebe3d5";
+        ctx.beginPath();
+        ctx.moveTo(8, -96);
+        ctx.lineTo(25, -90);
+        ctx.lineTo(28, -24);
+        ctx.lineTo(12, -24);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
 
-    function drawShaker(x, y, rot, ox, oy, color, fillRatio) {
+        // Hlava v bočnom profile (s výrazným nosom, čelom, bradou a uchom)
         ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(rot);
-        ctx.translate(-ox, -oy);
+        ctx.translate(4 + headTurn * 7, -112);
+        ctx.rotate(headNod);
 
-        // Tieň pod shakerom
-        ctx.fillStyle = "rgba(0, 0, 0, 0.38)";
+        // Krk
+        ctx.fillStyle = "#dfa97d";
+        ctx.strokeStyle = INK;
+        ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.ellipse(0, 4, 28, 7, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Tekutina vo vnútri
-        const maxH = 44;
-        const curH = Math.max(6, maxH * fillRatio);
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.moveTo(-20, -6 - curH);
-        ctx.lineTo(20, -6 - curH);
-        ctx.lineTo(17, -6);
-        ctx.lineTo(-17, -6);
-        ctx.closePath();
-        ctx.fill();
-
-        // Kovové / sklenené telo shakera s leskom
-        const bodyGrad = ctx.createLinearGradient(-24, 0, 24, 0);
-        bodyGrad.addColorStop(0, "rgba(148, 163, 184, 0.35)");
-        bodyGrad.addColorStop(0.3, "rgba(255, 255, 255, 0.65)");
-        bodyGrad.addColorStop(0.75, "rgba(203, 213, 225, 0.25)");
-        bodyGrad.addColorStop(1, "rgba(71, 85, 105, 0.45)");
-
-        ctx.fillStyle = bodyGrad;
-        ctx.strokeStyle = "#cbd5e1";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(-23, -54);
-        ctx.lineTo(23, -54);
-        ctx.lineTo(18, -4);
-        ctx.lineTo(-18, -4);
+        ctx.moveTo(-14, 14);
+        ctx.lineTo(12, 14);
+        ctx.lineTo(14, 28);
+        ctx.lineTo(-16, 28);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
-
-        // Vrchnák shakera
-        drawShadedCylinder(0, -68, 22, 46, 14, "#94a3b8", "#475569", "#e2e8f0");
-        drawShadedCylinder(0, -76, 12, 14, 8, "#cbd5e1", "#64748b", "#f8fafc");
-
-        ctx.restore();
-    }
-
-    function renderFrame(now) {
-        requestAnimationFrame(renderFrame);
-        resizeCanvas();
-
-        const w = canvas.clientWidth || 540;
-        const h = canvas.clientHeight || 390;
-        const counterY = h * 0.66;
-
-        // Pozadie a teplé barové svetlo
-        const bgGrad = ctx.createLinearGradient(0, 0, 0, counterY);
-        bgGrad.addColorStop(0, "#191512");
-        bgGrad.addColorStop(1, "#261d17");
-        ctx.fillStyle = bgGrad;
-        ctx.fillRect(0, 0, w, counterY);
-
-        // Drevený barový pult s hĺbkou
-        const woodGrad = ctx.createLinearGradient(0, counterY, 0, h);
-        woodGrad.addColorStop(0, "#754422");
-        woodGrad.addColorStop(0.22, "#593217");
-        woodGrad.addColorStop(1, "#29160a");
-        ctx.fillStyle = woodGrad;
-        ctx.fillRect(0, counterY, w, h - counterY);
-
-        // Predná hrana pultu
-        ctx.fillStyle = "#8c532a";
-        ctx.fillRect(0, counterY, w, 7);
-
-        const elapsed = (now - phaseStart) / 1000;
-        let barmanX = w * 0.34;
-        let barmanY = counterY;
-        let headTurn = 0;
-        let bodyTilt = 0;
-        let bobY = 0;
-
-        let shakerX = w * 0.62;
-        let shakerY = counterY;
-        let shakerRot = 0;
-
-        if (phase === "shake") {
-            shakerX = w * 0.62 + Math.sin(elapsed * 32) * 14;
-            shakerY = counterY - Math.abs(Math.cos(elapsed * 24)) * 12;
-            shakerRot = Math.sin(elapsed * 32) * 0.32;
-        } else if (phase === "look") {
-            headTurn = Math.sin(elapsed * 6.5) * 0.85;
-        } else if (phase === "drink") {
-            const t = Math.min(1, elapsed / 0.35);
-            shakerX = (w * 0.62) * (1 - t) + (barmanX + 34) * t;
-            shakerY = counterY * (1 - t) + (counterY - 126) * t;
-            shakerRot = -0.85 * t;
-            bodyTilt = -0.06 * t;
-            if (elapsed > 0.3) {
-                liquidLevel = Math.max(0.2, 0.72 - (elapsed - 0.3) * 0.85);
-            }
-        } else if (phase === "bad") {
-            bobY = Math.abs(Math.sin(elapsed * 9)) * 7;
-            bodyTilt = Math.sin(elapsed * 18) * 0.1;
-            headTurn = -0.25;
-        } else if (phase === "mid") {
-            bodyTilt = Math.sin(elapsed * 5) * 0.04;
-            headTurn = Math.sin(elapsed * 4) * 0.35;
-        } else if (phase === "good") {
-            bobY = -Math.abs(Math.sin(elapsed * 10)) * 11;
-            bodyTilt = Math.sin(elapsed * 10) * 0.05;
-        }
-
-        drawBartender(barmanX, barmanY, headTurn, bodyTilt, bobY, mood);
-        drawShaker(shakerX, shakerY, shakerRot, 0, 0, drinkColor, liquidLevel);
-
-        // Častice reakcie
-        for (let i = particles.length - 1; i >= 0; i--) {
-            const p = particles[i];
-            p.x += p.vx * 0.016;
-            p.y += p.vy * 0.016;
-            p.vy += 180 * 0.016;
-            p.life -= 0.022;
-            if (p.life <= 0) {
-                particles.splice(i, 1);
-                continue;
-            }
-            ctx.save();
-            ctx.globalAlpha = Math.max(0, p.life);
-            ctx.fillStyle = p.color;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-        }
-    }
-
-    function configureOutcome(quality, won) {
-        if (quality < 40) {
-            return {
-                drinkName: "Zelený odvar",
-                mood: "bad",
-                phase: "bad",
-                color: "#7bc936",
-                msg: "Zelený mix ho úplne rozhodil – sémanticky sme ďaleko od cieľa."
-            };
-        }
-        if (quality < 75) {
-            return {
-                drinkName: "Jantárový tonik",
-                mood: "mid",
-                phase: "mid",
-                color: "#d9a738",
-                msg: "Hm, niečo v tom už cítiť, ale ešte to chce presnejší smer."
-            };
-        }
-        return {
-            drinkName: won ? "Zlatý elixír" : "Čistý nektár",
-            mood: "good",
-            phase: "good",
-            color: won ? "#f5b942" : "#38bdf8",
-            msg: won
-                ? "Presný zásah! Pripravujem nové tajné slovo do ďalšieho kola."
-                : "Výborný mix – slovo je už veľmi blízko cieľu."
-        };
-    }
-
-    function resetRound(roundNum, msg) {
-        logs = [];
-        renderLogs();
-        document.getElementById("round-txt").textContent = `Kolo #${roundNum}`;
-        document.getElementById("status-main").textContent = msg;
-        document.getElementById("status-sub").textContent = "Čaká na tip · kvalita 0–100";
-        mood = "idle";
-        drinkColor = "#d98a2b";
-        liquidLevel = 0.72;
-        setPhase("idle");
-    }
-
-    async function manualNewRound() {
-        if (busy) return;
-        const btn = document.getElementById("new-word-btn");
-        btn.disabled = true;
-        try {
-            const res = await fetch("/new-game", { method: "POST" });
-            const data = await res.json();
-            if (res.ok) {
-                resetRound(data.round, "Nové tajné slovo je nastavené. Zadaj svoj ďalší tip.");
-            }
-        } finally {
-            btn.disabled = false;
-        }
-    }
-
-    async function submitGuess() {
-        if (busy) return;
-        const input = document.getElementById("word-input");
-        const mixBtn = document.getElementById("mix-btn");
-        const newWordBtn = document.getElementById("new-word-btn");
-        const errBox = document.getElementById("err-box");
-        const word = input.value.trim();
-
-        if (!word) return;
-        errBox.textContent = "";
-
-        try {
-            const res = await fetch("/guess", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ word })
-            });
-            const data = await res.json();
-
-            if (!res.ok) {
-                errBox.textContent = data.error;
-                return;
-            }
-
-            busy = true;
-            mixBtn.disabled = true;
-            newWordBtn.disabled = true;
-            input.value = "";
-
-            const cfg = configureOutcome(data.quality, data.won);
-            const mainEl = document.getElementById("status-main");
-            const subEl = document.getElementById("status-sub");
-
-            mood = "idle";
-            drinkColor = cfg.color;
-            liquidLevel = 0.72;
-            subEl.textContent = `${cfg.drinkName} · kvalita ${data.quality}/100 · #${data.rank}/${data.total} · cos ${data.similarity}`;
-
-            setPhase("shake");
-            mainEl.textContent = "Pretriasa shaker...";
-
-            setTimeout(() => {
-                setPhase("look");
-                mainEl.textContent = "Rozhliada sa okolo seba...";
-            }, 950);
-
-            setTimeout(() => {
-                setPhase("drink");
-                mainEl.textContent = "Napíja sa...";
-            }, 1850);
-
-            setTimeout(() => {
-                mood = cfg.mood;
-                setPhase(cfg.phase);
-                spawnParticles(cfg.color, cfg.mood === "good" ? 16 : 9);
-                mainEl.textContent = cfg.msg;
-
-                logs.unshift({
-                    word: data.word,
-                    drink: cfg.drinkName,
-                    quality: data.quality,
-                    rank: data.rank
-                });
-                renderLogs();
-
-                if (data.won && data.next_round_started) {
-                    setTimeout(() => {
-                        resetRound(
-                            data.round,
-                            `Uhádol si „${data.word}“. Začína Kolo #${data.round} s novým tajným slovom.`
-                        );
-                        busy = false;
-                        mixBtn.disabled = false;
-                        newWordBtn.disabled = false;
-                        input.focus();
-                    }, 1600);
-                } else {
-                    busy = false;
-                    mixBtn.disabled = false;
-                    newWordBtn.disabled = false;
-                    input.focus();
-                }
-            }, 3050);
-
-        } catch (e) {
-            errBox.textContent = "Nepodarilo sa spojiť so serverom.";
-            busy = false;
-            mixBtn.disabled = false;
-            newWordBtn.disabled = false;
-        }
-    }
-
-    function renderLogs() {
-        const el = document.getElementById("log-list");
-        el.innerHTML = logs.map((item) => `
-            <div class="log-row">
-                <div>
-                    <div class="log-word">${item.word}</div>
-                    <div class="log-drink">${item.drink}</div>
-                </div>
-                <div class="log-score">${item.quality}/100 · #${item.rank}</div>
-            </div>
-        `).join("");
-    }
-
-    requestAnimationFrame(renderFrame);
-</script>
-</body>
-</html>
