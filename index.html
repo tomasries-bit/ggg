@@ -238,7 +238,7 @@
             gap: 10px;
             padding: 8px 10px;
             border-radius: 7px;
-            background: var(--surface-2);
+            background: var(--panel-2);
             border: 1px solid rgba(255, 255, 255, 0.04);
             font-size: 0.85rem;
         }
@@ -315,25 +315,41 @@
     const canvas = document.getElementById("bar-canvas");
     const ctx = canvas.getContext("2d");
 
-    let phase = "idle"; // idle | shake | look | drink | bad | mid | good
+    let phase = "idle";
     let phaseStart = performance.now();
-    let mood = "idle"; // idle | bad | mid | good
+    let mood = "idle";
     let drinkColor = "#d98a2b";
     let liquidRatio = 0.72;
     let particles = [];
 
     const INK = "#18120e";
 
+    function addRoundedRectPath(x, y, w, h, r) {
+        const radius = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + w - radius, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+        ctx.lineTo(x + w, y + h - radius);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+        ctx.lineTo(x + radius, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+    }
+
     function resizeCanvas() {
         const rect = canvas.getBoundingClientRect();
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        const w = Math.max(300, Math.round(rect.width));
-        const h = Math.max(240, Math.round(rect.height));
+        const w = Math.max(300, Math.round(rect.width || 560));
+        const h = Math.max(240, Math.round(rect.height || 400));
         if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
             canvas.width = w * dpr;
             canvas.height = h * dpr;
         }
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        return { w, h };
     }
 
     function setPhase(nextPhase) {
@@ -356,7 +372,6 @@
     }
 
     function drawBackgroundBottles(counterY, w) {
-        // Jemná polička s fľašami v pozadí pre hĺbku scény
         const shelfY = counterY - 122;
         ctx.fillStyle = "#2b1d14";
         ctx.fillRect(28, shelfY, w - 56, 7);
@@ -365,37 +380,32 @@
             { x: 64, h: 52, w: 16, col: "#3d6b4c" },
             { x: 88, h: 44, w: 14, col: "#8c4a27" },
             { x: 112, h: 58, w: 17, col: "#2f4e6e" },
-            { x: 410, h: 50, w: 15, col: "#7a3b2e" },
-            { x: 434, h: 42, w: 14, col: "#5c6b3c" }
+            { x: Math.max(180, w - 150), h: 50, w: 15, col: "#7a3b2e" },
+            { x: Math.max(205, w - 126), h: 42, w: 14, col: "#5c6b3c" }
         ];
 
         for (const b of bottleSpecs) {
             ctx.fillStyle = b.col;
             ctx.strokeStyle = "#120c08";
             ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.roundRect(b.x - b.w / 2, shelfY - b.h, b.w, b.h, 3);
+            addRoundedRectPath(b.x - b.w / 2, shelfY - b.h, b.w, b.h, 3);
             ctx.fill();
             ctx.stroke();
 
-            // Hrdlo fľaše
             ctx.fillRect(b.x - 4, shelfY - b.h - 10, 8, 10);
         }
     }
 
-    // Ručne kreslený profil barmana otočeného doprava (smerom k pultu a shakeru)
     function drawBartenderProfile(x, y, headNod, headTurn, bodyTilt, bobY, armAngle, currentMood) {
         ctx.save();
         ctx.translate(x, y + bobY);
         ctx.rotate(bodyTilt);
 
-        // Tieň na pulte
         ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
         ctx.beginPath();
         ctx.ellipse(6, 2, 56, 9, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Trup / vesta + biela košeľa v bočnom profile
         ctx.fillStyle = "#252c34";
         ctx.strokeStyle = INK;
         ctx.lineWidth = 3;
@@ -409,7 +419,6 @@
         ctx.fill();
         ctx.stroke();
 
-        // Predná biela košeľa a traky
         ctx.fillStyle = "#ebe3d5";
         ctx.beginPath();
         ctx.moveTo(8, -96);
@@ -420,12 +429,10 @@
         ctx.fill();
         ctx.stroke();
 
-        // Hlava v bočnom profile (s výrazným nosom, čelom, bradou a uchom)
         ctx.save();
         ctx.translate(4 + headTurn * 7, -112);
         ctx.rotate(headNod);
 
-        // Krk
         ctx.fillStyle = "#dfa97d";
         ctx.strokeStyle = INK;
         ctx.lineWidth = 3;
@@ -437,3 +444,205 @@
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
+
+        const skinGrad = ctx.createLinearGradient(-22, -28, 28, 18);
+        skinGrad.addColorStop(0, "#e5b288");
+        skinGrad.addColorStop(0.7, "#ecc099");
+        skinGrad.addColorStop(1, "#d49c70");
+        ctx.fillStyle = skinGrad;
+        ctx.beginPath();
+        ctx.moveTo(-20, -18);
+        ctx.bezierCurveTo(-18, -36, 12, -36, 20, -14);
+        ctx.lineTo(29, -4);
+        ctx.quadraticCurveTo(31, 1, 21, 3);
+        ctx.lineTo(22, 9);
+        ctx.quadraticCurveTo(25, 16, 15, 20);
+        ctx.quadraticCurveTo(4, 24, -8, 18);
+        ctx.bezierCurveTo(-24, 12, -25, -6, -20, -18);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#d9a074";
+        ctx.beginPath();
+        ctx.ellipse(-9, -4, 6.5, 9.5, -0.15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#2b1b12";
+        ctx.beginPath();
+        ctx.moveTo(-22, -16);
+        ctx.bezierCurveTo(-26, -38, 6, -42, 18, -22);
+        ctx.quadraticCurveTo(4, -26, -12, -22);
+        ctx.quadraticCurveTo(-16, -6, -22, -16);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        const eyeX = 11 + headTurn * 3;
+        ctx.strokeStyle = INK;
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        if (currentMood === "bad") {
+            ctx.moveTo(eyeX - 5, -13);
+            ctx.lineTo(eyeX + 5, -9);
+        } else if (currentMood === "good") {
+            ctx.arc(eyeX, -10, 4, Math.PI, Math.PI * 2);
+        } else {
+            ctx.moveTo(eyeX - 4, -12);
+            ctx.lineTo(eyeX + 4, -12);
+        }
+        ctx.stroke();
+
+        if (currentMood !== "good") {
+            ctx.fillStyle = INK;
+            ctx.beginPath();
+            ctx.ellipse(eyeX, -6, 2.6, currentMood === "bad" ? 1.8 : 3.2, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.lineWidth = 2.6;
+        ctx.strokeStyle = currentMood === "bad" ? "#65b824" : INK;
+        ctx.beginPath();
+        if (currentMood === "bad") {
+            ctx.moveTo(11, 10);
+            ctx.quadraticCurveTo(15, 6, 19, 10);
+            ctx.quadraticCurveTo(22, 13, 25, 9);
+        } else if (currentMood === "good") {
+            ctx.moveTo(12, 8);
+            ctx.quadraticCurveTo(20, 16, 26, 7);
+        } else {
+            ctx.moveTo(13, 10);
+            ctx.lineTo(23, 10);
+        }
+        ctx.stroke();
+
+        ctx.restore();
+
+        ctx.save();
+        ctx.translate(10, -76);
+        ctx.rotate(armAngle);
+
+        ctx.fillStyle = "#252c34";
+        ctx.strokeStyle = INK;
+        ctx.lineWidth = 3;
+        addRoundedRectPath(-8, -6, 44, 15, 7);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#e6b48a";
+        ctx.beginPath();
+        ctx.arc(38, 1.5, 8.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.restore();
+        ctx.restore();
+    }
+
+    function drawShaker(x, y, rot, color, fillRatio) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(rot);
+
+        ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
+        ctx.beginPath();
+        ctx.ellipse(0, 2, 22, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        const maxH = 36;
+        const curH = Math.max(5, maxH * fillRatio);
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(-16, -4 - curH);
+        ctx.lineTo(16, -4 - curH);
+        ctx.lineTo(13, -4);
+        ctx.lineTo(-13, -4);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = INK;
+        ctx.fillStyle = "rgba(235, 243, 250, 0.28)";
+        ctx.lineWidth = 2.6;
+        ctx.beginPath();
+        ctx.moveTo(-18, -44);
+        ctx.lineTo(18, -44);
+        ctx.lineTo(14, -3);
+        ctx.lineTo(-14, -3);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#aeb8c2";
+        ctx.beginPath();
+        ctx.moveTo(-17, -44);
+        ctx.lineTo(17, -44);
+        ctx.lineTo(11, -58);
+        ctx.lineTo(-11, -58);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    function renderFrame(now) {
+        requestAnimationFrame(renderFrame);
+        const { w, h } = resizeCanvas();
+        const counterY = h * 0.69;
+
+        const wallGrad = ctx.createLinearGradient(0, 0, 0, counterY);
+        wallGrad.addColorStop(0, "#191512");
+        wallGrad.addColorStop(1, "#261d17");
+        ctx.fillStyle = wallGrad;
+        ctx.fillRect(0, 0, w, counterY);
+
+        drawBackgroundBottles(counterY, w);
+
+        const woodGrad = ctx.createLinearGradient(0, counterY, 0, h);
+        woodGrad.addColorStop(0, "#7a4723");
+        woodGrad.addColorStop(0.25, "#593217");
+        woodGrad.addColorStop(1, "#261409");
+        ctx.fillStyle = woodGrad;
+        ctx.fillRect(0, counterY, w, h - counterY);
+
+        ctx.fillStyle = "#91562c";
+        ctx.fillRect(0, counterY, w, 6);
+        ctx.strokeStyle = INK;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(0, counterY);
+        ctx.lineTo(w, counterY);
+        ctx.stroke();
+
+        const elapsed = (now - phaseStart) / 1000;
+        let barmanX = w * 0.31;
+        let barmanY = counterY;
+        let headNod = 0;
+        let headTurn = 0;
+        let bodyTilt = 0;
+        let bobY = 0;
+        let armAngle = 0.25;
+
+        let shakerX = w * 0.52;
+        let shakerY = counterY;
+        let shakerRot = 0;
+
+        if (phase === "shake") {
+            armAngle = -0.35 + Math.sin(elapsed * 30) * 0.35;
+            shakerX = w * 0.52 + Math.sin(elapsed * 30) * 14;
+            shakerY = counterY - 26 - Math.abs(Math.cos(elapsed * 22)) * 12;
+            shakerRot = Math.sin(elapsed * 30) * 0.32;
+        } else if (phase === "look") {
+            headTurn = Math.sin(elapsed * 6) * 0.9;
+            headNod = Math.sin(elapsed * 3) * 0.06;
+        } else if (phase === "drink") {
+            const t = Math.min(1, elapsed / 0.35);
+            armAngle = 0.25 * (1 - t) + (-0.95) * t;
+            headNod = -0.22 * t;
+            shakerX = (w * 0.52) * (1 - t) + (barmanX + 36) * t;
+            shakerY = counterY * (1 - t) + (counterY - 108) * t;
+            shakerRot = -0.95 * t;
+            if (elapsed > 0.3) {
+                liquidRatio = Math.max(0.18, 0.72 - (elapsed - 0.3) * 0.85);
+            }
