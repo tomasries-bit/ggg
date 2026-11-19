@@ -1,883 +1,125 @@
-<!DOCTYPE html>
-<html lang="sk">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Uhádni slovo</title>
-    <style>
-        :root {
-            --bg: #0f0e0d;
-            --surface: #181614;
-            --surface-2: #221f1c;
-            --ink: #f5efe4;
-            --muted: #a69a8a;
-            --line: #342e28;
-            --accent: #e5932d;
-        }
+from flask import Flask, request, jsonify, send_from_directory
+import numpy as np
+import random
 
-        * {
-            box-sizing: border-box;
-        }
+app = Flask(__name__)
 
-        body {
-            margin: 0;
-            min-height: 100vh;
-            background: radial-gradient(circle at 50% 0%, #241d17 0%, var(--bg) 68%);
-            color: var(--ink);
-            font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 18px;
-        }
 
-        .shell {
-            width: 100%;
-            max-width: 1020px;
-            background: var(--surface);
-            border: 1px solid var(--line);
-            border-radius: 16px;
-            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
-            overflow: hidden;
-        }
-
-        .top {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            padding: 14px 22px;
-            background: var(--surface-2);
-            border-bottom: 1px solid var(--line);
-        }
-
-        .brand {
-            display: flex;
-            align-items: baseline;
-            gap: 10px;
-        }
-
-        h1 {
-            margin: 0;
-            font-size: 1.2rem;
-            font-weight: 700;
-            letter-spacing: -0.01em;
-        }
-
-        .tag {
-            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-            font-size: 0.76rem;
-            color: var(--muted);
-        }
-
-        .actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .round-pill {
-            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-            font-size: 0.82rem;
-            font-weight: 600;
-            color: var(--accent);
-            background: rgba(229, 147, 45, 0.1);
-            border: 1px solid rgba(229, 147, 45, 0.28);
-            padding: 5px 11px;
-            border-radius: 999px;
-        }
-
-        .btn-sec {
-            background: transparent;
-            color: var(--ink);
-            border: 1px solid var(--line);
-            border-radius: 8px;
-            padding: 7px 12px;
-            font-size: 0.82rem;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .btn-sec:hover:not(:disabled) {
-            border-color: #5a5046;
-            background: rgba(255, 255, 255, 0.04);
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: 1.32fr 0.88fr;
-        }
-
-        @media (max-width: 840px) {
-            .grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .stage-col {
-            border-right: 1px solid var(--line);
-            display: flex;
-            flex-direction: column;
-        }
-
-        @media (max-width: 840px) {
-            .stage-col {
-                border-right: none;
-                border-bottom: 1px solid var(--line);
-            }
-        }
-
-        canvas#scene {
-            display: block;
-            width: 100%;
-            height: 420px;
-            background: #14100d;
-        }
-
-        .caption {
-            padding: 13px 20px;
-            background: #151210;
-            border-top: 1px solid var(--line);
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        #status-main {
-            font-size: 0.96rem;
-            font-weight: 600;
-        }
-
-        #status-sub {
-            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-            font-size: 0.78rem;
-            color: var(--muted);
-        }
-
-        .side-col {
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-
-        .hint {
-            margin: 0;
-            font-size: 0.88rem;
-            line-height: 1.48;
-            color: var(--muted);
-        }
-
-        .guess-form {
-            display: flex;
-            gap: 8px;
-        }
-
-        input[type="text"] {
-            flex: 1;
-            min-width: 0;
-            padding: 11px 14px;
-            font-size: 0.98rem;
-            color: var(--ink);
-            background: var(--bg);
-            border: 1px solid var(--line);
-            border-radius: 9px;
-            outline: none;
-        }
-
-        input[type="text"]:focus {
-            border-color: var(--accent);
-        }
-
-        .btn-main {
-            padding: 11px 18px;
-            font-size: 0.92rem;
-            font-weight: 700;
-            color: #16100a;
-            background: var(--accent);
-            border: none;
-            border-radius: 9px;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-
-        .btn-main:hover:not(:disabled) {
-            filter: brightness(1.08);
-        }
-
-        button:disabled {
-            opacity: 0.45;
-            cursor: not-allowed;
-        }
-
-        #err-msg {
-            min-height: 18px;
-            font-size: 0.82rem;
-            color: #f26d6d;
-        }
-
-        .log-head {
-            display: flex;
-            justify-content: space-between;
-            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-            font-size: 0.74rem;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding-bottom: 6px;
-            border-bottom: 1px solid var(--line);
-        }
-
-        .log-list {
-            flex: 1;
-            max-height: 230px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 7px;
-        }
-
-        .log-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-            padding: 9px 11px;
-            border-radius: 8px;
-            background: var(--surface-2);
-            border: 1px solid rgba(255, 255, 255, 0.04);
-            font-size: 0.86rem;
-        }
-
-        .log-word {
-            font-weight: 700;
-        }
-
-        .log-drink {
-            color: var(--muted);
-            font-size: 0.78rem;
-        }
-
-        .log-meta {
-            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-            font-size: 0.8rem;
-            font-weight: 600;
-            white-space: nowrap;
-        }
-    </style>
-</head>
-<body>
-<div class="shell">
-    <div class="top">
-        <div class="brand">
-            <h1>Uhádni slovo</h1>
-            <span class="tag">3D hĺbka · kosínusová podobnosť</span>
-        </div>
-        <div class="actions">
-            <span class="round-pill" id="round-pill">Kolo #1</span>
-            <button class="btn-sec" id="new-word-btn" type="button" onclick="manualNewRound()">Nové slovo</button>
-        </div>
-    </div>
-
-    <div class="grid">
-        <div class="stage-col">
-            <canvas id="scene" width="580" height="420"></canvas>
-            <div class="caption">
-                <div id="status-main">Zadaj slovo a barman namieša prvý drink.</div>
-                <div id="status-sub">Čaká na tip · kvalita 0–100</div>
-            </div>
-        </div>
-
-        <div class="side-col">
-            <p class="hint">
-                Tipni slovo. Čím bližšie je vo vektorovom priestore k tajnému slovu, tým lepší drink namieša. Po uhádnutí sa automaticky spustí nové kolo.
-            </p>
-
-            <form class="guess-form" onsubmit="event.preventDefault(); submitGuess();">
-                <input
-                    id="word-input"
-                    type="text"
-                    autocomplete="off"
-                    placeholder="Napr. čaj, voda, stôl, auto, bager..."
-                />
-                <button class="btn-main" id="mix-btn" type="submit">Namiešať</button>
-            </form>
-
-            <div id="err-msg"></div>
-
-            <div class="log-head">
-                <span>História kola</span>
-                <span>Kvalita / #</span>
-            </div>
-            <div class="log-list" id="log-list"></div>
-        </div>
-    </div>
-</div>
-
-<script>
-    let logs = [];
-    let busy = false;
-
-    const canvas = document.getElementById("scene");
-    const ctx = canvas.getContext("2d");
-
-    let phase = "idle";
-    let phaseStart = performance.now();
-    let mood = "idle";
-    let drinkColor = "#e5932d";
-    let liquidRatio = 0.72;
-    let particles = [];
-
-    function resizeCanvas() {
-        const rect = canvas.getBoundingClientRect();
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        const w = Math.max(300, Math.round(rect.width || 580));
-        const h = Math.max(260, Math.round(rect.height || 420));
-        if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
-            canvas.width = w * dpr;
-            canvas.height = h * dpr;
-        }
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        return { w, h };
+def load_demo_embeddings():
+    raw_data = {
+        "káva": [0.95, 0.90, 0.10, 0.05, 0.85],
+        "espresso": [0.92, 0.88, 0.12, 0.04, 0.82],
+        "kofeín": [0.88, 0.85, 0.15, 0.10, 0.78],
+        "čaj": [0.80, 0.85, 0.10, 0.05, 0.70],
+        "šálka": [0.75, 0.70, 0.25, 0.05, 0.65],
+        "raňajky": [0.65, 0.75, 0.20, 0.15, 0.60],
+        "mlieko": [0.60, 0.72, 0.15, 0.10, 0.55],
+        "voda": [0.50, 0.65, 0.20, 0.15, 0.40],
+        "koláč": [0.45, 0.60, 0.25, 0.20, 0.45],
+        "stôl": [0.30, 0.35, 0.60, 0.25, 0.20],
+        "kuchyňa": [0.35, 0.40, 0.55, 0.20, 0.30],
+        "auto": [0.10, 0.05, 0.80, 0.90, 0.10],
+        "vlak": [0.08, 0.05, 0.85, 0.88, 0.08],
+        "počítač": [0.15, 0.10, 0.75, 0.70, 0.25],
+        "pes": [0.12, 0.20, 0.30, 0.40, 0.15],
+        "mačka": [0.14, 0.22, 0.28, 0.38, 0.16],
+        "les": [0.05, 0.15, 0.40, 0.20, 0.05],
+        "kameň": [0.02, 0.01, 0.90, 0.10, 0.01],
+        "bager": [0.01, 0.01, 0.95, 0.95, 0.01],
     }
 
-    function setPhase(nextPhase) {
-        phase = nextPhase;
-        phaseStart = performance.now();
-    }
+    words = list(raw_data.keys())
+    word2idx = {word: idx for idx, word in enumerate(words)}
+    matrix = np.array(list(raw_data.values()), dtype=np.float32)
+    return words, word2idx, matrix
 
-    function spawnParticles(color, count, ox, oy, mode) {
-        for (let i = 0; i < count; i++) {
-            const vy = mode === "bad" ? 25 + Math.random() * 65 : -45 - Math.random() * 105;
-            particles.push({
-                x: ox + (Math.random() - 0.5) * 44,
-                y: oy + (Math.random() - 0.5) * 28,
-                vx: (Math.random() - 0.5) * 110,
-                vy,
-                r: 2.8 + Math.random() * 3.5,
-                life: 1.0,
-                color
-            });
+
+WORDS, WORD2IDX, EMBEDDING_MATRIX = load_demo_embeddings()
+TOTAL_WORDS = len(WORDS)
+
+
+def compute_rankings(secret_word):
+    target_idx = WORD2IDX[secret_word]
+    target_vec = EMBEDDING_MATRIX[target_idx]
+
+    dot_products = EMBEDDING_MATRIX @ target_vec
+    norms = np.linalg.norm(EMBEDDING_MATRIX, axis=1) * np.linalg.norm(target_vec)
+    similarities = dot_products / (norms + 1e-10)
+
+    sorted_indices = np.argsort(similarities)[::-1]
+    rankings = {}
+    for rank, idx in enumerate(sorted_indices, start=1):
+        word = WORDS[idx]
+        rankings[word] = {
+            "rank": rank,
+            "similarity": float(similarities[idx]),
         }
-    }
+    return rankings
 
-    function drawBarEnvironment(w, h, counterBackY, counterFrontY) {
-        const wallGrad = ctx.createRadialGradient(w * 0.48, counterBackY * 0.55, 20, w * 0.48, counterBackY * 0.65, w * 0.75);
-        wallGrad.addColorStop(0, "#31241a");
-        wallGrad.addColorStop(0.55, "#1e1712");
-        wallGrad.addColorStop(1, "#120e0b");
-        ctx.fillStyle = wallGrad;
-        ctx.fillRect(0, 0, w, counterBackY);
 
-        const shelfY = counterBackY - 126;
-        ctx.fillStyle = "#2b1d13";
-        ctx.fillRect(24, shelfY, w - 48, 7);
-        ctx.fillStyle = "rgba(0,0,0,0.4)";
-        ctx.fillRect(24, shelfY + 7, w - 48, 6);
+def pick_new_secret(exclude_word=None):
+    candidates = [w for w in WORDS if w != exclude_word]
+    return random.choice(candidates if candidates else WORDS)
 
-        const bottles = [
-            { x: w * 0.12, h: 56, w: 16, col: "#2f5e42", hi: "#55946d" },
-            { x: w * 0.16, h: 46, w: 14, col: "#8c4620", hi: "#bd693b" },
-            { x: w * 0.20, h: 62, w: 17, col: "#28496b", hi: "#4a78a6" },
-            { x: w * 0.78, h: 52, w: 15, col: "#733326", hi: "#a85342" },
-            { x: w * 0.82, h: 44, w: 14, col: "#526334", hi: "#7d9454" }
-        ];
 
-        for (const b of bottles) {
-            const g = ctx.createLinearGradient(b.x - b.w / 2, 0, b.x + b.w / 2, 0);
-            g.addColorStop(0, b.col);
-            g.addColorStop(0.4, b.hi);
-            g.addColorStop(1, "#140e0a");
-            ctx.fillStyle = g;
-            ctx.fillRect(b.x - b.w / 2, shelfY - b.h, b.w, b.h);
-            ctx.fillRect(b.x - 3.5, shelfY - b.h - 11, 7, 11);
-        }
+SECRET_WORD = pick_new_secret()
+RANKINGS = compute_rankings(SECRET_WORD)
+ROUND_NUMBER = 1
 
-        const topWood = ctx.createLinearGradient(0, counterBackY, 0, counterFrontY);
-        topWood.addColorStop(0, "#63381a");
-        topWood.addColorStop(1, "#94572c");
-        ctx.fillStyle = topWood;
-        ctx.beginPath();
-        ctx.moveTo(16, counterBackY);
-        ctx.lineTo(w - 16, counterBackY);
-        ctx.lineTo(w, counterFrontY);
-        ctx.lineTo(0, counterFrontY);
-        ctx.closePath();
-        ctx.fill();
 
-        const frontWood = ctx.createLinearGradient(0, counterFrontY, 0, h);
-        frontWood.addColorStop(0, "#472610");
-        frontWood.addColorStop(0.25, "#331a0a");
-        frontWood.addColorStop(1, "#1a0d05");
-        ctx.fillStyle = frontWood;
-        ctx.fillRect(0, counterFrontY, w, h - counterFrontY);
+@app.route("/")
+def index():
+    return send_from_directory(".", "index.html")
 
-        ctx.fillStyle = "#b87440";
-        ctx.fillRect(0, counterFrontY - 2, w, 4);
-    }
 
-    function drawBartender3D(x, y, headNod, headTurn, bodyTilt, bobY, armAngle, currentMood) {
-        ctx.save();
-        ctx.translate(x, y + bobY);
-        ctx.rotate(bodyTilt);
+@app.route("/guess", methods=["POST"])
+def guess():
+    global SECRET_WORD, RANKINGS, ROUND_NUMBER
 
-        const shadowGrad = ctx.createRadialGradient(8, 4, 4, 8, 4, 68);
-        shadowGrad.addColorStop(0, "rgba(0, 0, 0, 0.55)");
-        shadowGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
-        ctx.fillStyle = shadowGrad;
-        ctx.beginPath();
-        ctx.ellipse(8, 4, 66, 13, 0, 0, Math.PI * 2);
-        ctx.fill();
+    data = request.get_json() or {}
+    word = data.get("word", "").strip().lower()
 
-        const suitGrad = ctx.createLinearGradient(-38, -104, 34, 0);
-        suitGrad.addColorStop(0, "#1c2229");
-        suitGrad.addColorStop(0.55, "#323c47");
-        suitGrad.addColorStop(1, "#4c5a69");
-        ctx.fillStyle = suitGrad;
-        ctx.beginPath();
-        ctx.moveTo(-36, 0);
-        ctx.quadraticCurveTo(-40, -60, -24, -100);
-        ctx.quadraticCurveTo(4, -108, 26, -96);
-        ctx.quadraticCurveTo(38, -56, 32, 0);
-        ctx.closePath();
-        ctx.fill();
+    if word not in WORD2IDX:
+        return jsonify({
+            "error": f"Slovo '{word}' nemám v slovníku! Skús napr. čaj, voda, stôl, auto, pes, bager..."
+        }), 404
 
-        ctx.fillStyle = "#e8e0d2";
-        ctx.beginPath();
-        ctx.moveTo(8, -100);
-        ctx.lineTo(26, -94);
-        ctx.lineTo(29, -22);
-        ctx.lineTo(13, -22);
-        ctx.closePath();
-        ctx.fill();
+    info = RANKINGS[word]
+    rank = info["rank"]
+    won = rank == 1
 
-        ctx.fillStyle = "#e5932d";
-        ctx.beginPath();
-        ctx.moveTo(16, -86);
-        ctx.lineTo(25, -91);
-        ctx.lineTo(25, -81);
-        ctx.closePath();
-        ctx.fill();
+    if TOTAL_WORDS > 1:
+        quality = round(((TOTAL_WORDS - rank) / (TOTAL_WORDS - 1)) * 100)
+    else:
+        quality = 100
 
-        ctx.save();
-        ctx.translate(4 + headTurn * 8, -118);
-        ctx.rotate(headNod);
+    next_round_started = False
+    if won:
+        SECRET_WORD = pick_new_secret(exclude_word=word)
+        RANKINGS = compute_rankings(SECRET_WORD)
+        ROUND_NUMBER += 1
+        next_round_started = True
 
-        ctx.fillStyle = "#c99267";
-        ctx.beginPath();
-        ctx.moveTo(-14, 14);
-        ctx.lineTo(13, 14);
-        ctx.lineTo(15, 29);
-        ctx.lineTo(-16, 29);
-        ctx.closePath();
-        ctx.fill();
+    return jsonify({
+        "word": word,
+        "rank": rank,
+        "total": TOTAL_WORDS,
+        "quality": quality,
+        "similarity": round(info["similarity"], 3),
+        "won": won,
+        "next_round_started": next_round_started,
+        "round": ROUND_NUMBER,
+    })
 
-        const faceGrad = ctx.createRadialGradient(8, -12, 4, 2, -2, 38);
-        faceGrad.addColorStop(0, "#f7cfa9");
-        faceGrad.addColorStop(0.65, "#e3ac80");
-        faceGrad.addColorStop(1, "#b87e53");
-        ctx.fillStyle = faceGrad;
-        ctx.beginPath();
-        ctx.moveTo(-20, -19);
-        ctx.bezierCurveTo(-18, -38, 13, -38, 21, -15);
-        ctx.lineTo(31, -4);
-        ctx.quadraticCurveTo(33, 1, 22, 3);
-        ctx.lineTo(23, 9);
-        ctx.quadraticCurveTo(26, 17, 15, 21);
-        ctx.quadraticCurveTo(4, 25, -8, 19);
-        ctx.bezierCurveTo(-25, 13, -26, -6, -20, -19);
-        ctx.closePath();
-        ctx.fill();
 
-        ctx.fillStyle = "#cf966b";
-        ctx.beginPath();
-        ctx.ellipse(-9, -4, 6.5, 9.5, -0.15, 0, Math.PI * 2);
-        ctx.fill();
+@app.route("/new-game", methods=["POST"])
+def new_game():
+    global SECRET_WORD, RANKINGS, ROUND_NUMBER
+    SECRET_WORD = pick_new_secret(exclude_word=SECRET_WORD)
+    RANKINGS = compute_rankings(SECRET_WORD)
+    ROUND_NUMBER += 1
+    return jsonify({"round": ROUND_NUMBER})
 
-        const hairGrad = ctx.createLinearGradient(-24, -40, 16, -15);
-        hairGrad.addColorStop(0, "#1c120c");
-        hairGrad.addColorStop(1, "#3b2619");
-        ctx.fillStyle = hairGrad;
-        ctx.beginPath();
-        ctx.moveTo(-22, -16);
-        ctx.bezierCurveTo(-26, -40, 7, -43, 19, -22);
-        ctx.quadraticCurveTo(4, -27, -12, -23);
-        ctx.quadraticCurveTo(-16, -6, -22, -16);
-        ctx.closePath();
-        ctx.fill();
 
-        const eyeX = 11 + headTurn * 3;
-        ctx.strokeStyle = "#17110d";
-        ctx.lineWidth = 2.4;
-        ctx.beginPath();
-        if (currentMood === "bad") {
-            ctx.moveTo(eyeX - 5, -13);
-            ctx.lineTo(eyeX + 5, -9);
-        } else if (currentMood === "good") {
-            ctx.arc(eyeX, -10, 4.2, Math.PI, Math.PI * 2);
-        } else {
-            ctx.moveTo(eyeX - 4, -12);
-            ctx.lineTo(eyeX + 4, -12);
-        }
-        ctx.stroke();
-
-        if (currentMood !== "good") {
-            ctx.fillStyle = "#17110d";
-            ctx.beginPath();
-            ctx.ellipse(eyeX, -6, 2.7, currentMood === "bad" ? 1.8 : 3.3, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = "#ffffff";
-            ctx.beginPath();
-            ctx.arc(eyeX + 0.8, -7.2, 1.0, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        ctx.lineWidth = 2.8;
-        ctx.strokeStyle = currentMood === "bad" ? "#7fd136" : "#1d130e";
-        ctx.beginPath();
-        if (currentMood === "bad") {
-            ctx.moveTo(11, 10);
-            ctx.quadraticCurveTo(15, 5, 19, 10);
-            ctx.quadraticCurveTo(22, 14, 26, 9);
-        } else if (currentMood === "good") {
-            ctx.moveTo(12, 8);
-            ctx.quadraticCurveTo(20, 17, 27, 7);
-        } else {
-            ctx.moveTo(13, 10);
-            ctx.lineTo(23, 10);
-        }
-        ctx.stroke();
-
-        ctx.restore();
-
-        ctx.save();
-        ctx.translate(10, -78);
-        ctx.rotate(armAngle);
-
-        ctx.fillStyle = "#323c47";
-        ctx.beginPath();
-        ctx.moveTo(-4, -6);
-        ctx.lineTo(34, -6);
-        ctx.arc(34, 2, 8, -Math.PI / 2, Math.PI / 2);
-        ctx.lineTo(-4, 10);
-        ctx.arc(-4, 2, 8, Math.PI / 2, -Math.PI / 2);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.fillStyle = "#e8b68c";
-        ctx.beginPath();
-        ctx.arc(40, 2, 9, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.restore();
-        ctx.restore();
-    }
-
-    function drawShaker3D(x, y, rot, color, fillRatio) {
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(rot);
-
-        const sGrad = ctx.createRadialGradient(0, 2, 2, 0, 2, 34);
-        sGrad.addColorStop(0, "rgba(0,0,0,0.48)");
-        sGrad.addColorStop(1, "rgba(0,0,0,0)");
-        ctx.fillStyle = sGrad;
-        ctx.beginPath();
-        ctx.ellipse(0, 2, 32, 8, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        const maxH = 38;
-        const curH = Math.max(5, maxH * fillRatio);
-        const liqGrad = ctx.createLinearGradient(-18, 0, 18, 0);
-        liqGrad.addColorStop(0, "rgba(0,0,0,0.25)");
-        liqGrad.addColorStop(0.5, color);
-        liqGrad.addColorStop(1, "rgba(255,255,255,0.22)");
-        ctx.fillStyle = liqGrad;
-        ctx.beginPath();
-        ctx.moveTo(-17, -4 - curH);
-        ctx.lineTo(17, -4 - curH);
-        ctx.lineTo(14, -4);
-        ctx.lineTo(-14, -4);
-        ctx.closePath();
-        ctx.fill();
-
-        const metalGrad = ctx.createLinearGradient(-20, 0, 20, 0);
-        metalGrad.addColorStop(0, "rgba(148,163,184,0.28)");
-        metalGrad.addColorStop(0.35, "rgba(255,255,255,0.55)");
-        metalGrad.addColorStop(0.75, "rgba(203,213,225,0.18)");
-        metalGrad.addColorStop(1, "rgba(51,65,85,0.4)");
-        ctx.fillStyle = metalGrad;
-        ctx.strokeStyle = "rgba(241,245,249,0.75)";
-        ctx.lineWidth = 1.8;
-        ctx.beginPath();
-        ctx.moveTo(-19, -46);
-        ctx.lineTo(19, -46);
-        ctx.lineTo(15, -3);
-        ctx.lineTo(-15, -3);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-
-        const capGrad = ctx.createLinearGradient(-18, 0, 18, 0);
-        capGrad.addColorStop(0, "#64748b");
-        capGrad.addColorStop(0.45, "#e2e8f0");
-        capGrad.addColorStop(1, "#475569");
-        ctx.fillStyle = capGrad;
-        ctx.beginPath();
-        ctx.moveTo(-18, -46);
-        ctx.lineTo(18, -46);
-        ctx.lineTo(11, -61);
-        ctx.lineTo(-11, -61);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.restore();
-    }
-
-    function renderFrame(now) {
-        requestAnimationFrame(renderFrame);
-        const { w, h } = resizeCanvas();
-
-        const counterBackY = h * 0.64;
-        const counterFrontY = h * 0.75;
-        const standLineY = (counterBackY + counterFrontY) * 0.5;
-
-        drawBarEnvironment(w, h, counterBackY, counterFrontY);
-
-        const elapsed = (now - phaseStart) / 1000;
-        let barmanX = w * 0.30;
-        let barmanY = standLineY;
-        let headNod = 0;
-        let headTurn = 0;
-        let bodyTilt = 0;
-        let bobY = 0;
-        let armAngle = 0.25;
-
-        let shakerX = w * 0.54;
-        let shakerY = standLineY + 6;
-        let shakerRot = 0;
-
-        if (phase === "shake") {
-            armAngle = -0.38 + Math.sin(elapsed * 30) * 0.36;
-            shakerX = w * 0.54 + Math.sin(elapsed * 30) * 14;
-            shakerY = standLineY - 22 - Math.abs(Math.cos(elapsed * 22)) * 12;
-            shakerRot = Math.sin(elapsed * 30) * 0.32;
-        } else if (phase === "look") {
-            headTurn = Math.sin(elapsed * 6) * 0.9;
-            headNod = Math.sin(elapsed * 3) * 0.06;
-        } else if (phase === "drink") {
-            const t = Math.min(1, elapsed / 0.35);
-            armAngle = 0.25 * (1 - t) + (-0.98) * t;
-            headNod = -0.22 * t;
-            shakerX = (w * 0.54) * (1 - t) + (barmanX + 36) * t;
-            shakerY = (standLineY + 6) * (1 - t) + (standLineY - 110) * t;
-            shakerRot = -0.95 * t;
-            if (elapsed > 0.3) {
-                liquidRatio = Math.max(0.18, 0.72 - (elapsed - 0.3) * 0.85);
-            }
-        } else if (phase === "bad") {
-            bobY = Math.abs(Math.sin(elapsed * 8.5)) * 6;
-            bodyTilt = Math.sin(elapsed * 16) * 0.09;
-            headNod = 0.25;
-        } else if (phase === "mid") {
-            bodyTilt = Math.sin(elapsed * 4.5) * 0.035;
-            headNod = Math.sin(elapsed * 3.5) * 0.08;
-            headTurn = Math.sin(elapsed * 3.5) * 0.3;
-        } else if (phase === "good") {
-            bobY = -Math.abs(Math.sin(elapsed * 9.5)) * 11;
-            bodyTilt = Math.sin(elapsed * 9.5) * 0.045;
-            headNod = -0.08;
-        }
-
-        drawBartender3D(barmanX, barmanY, headNod, headTurn, bodyTilt, bobY, armAngle, mood);
-        drawShaker3D(shakerX, shakerY, shakerRot, drinkColor, liquidRatio);
-
-        for (let i = particles.length - 1; i >= 0; i--) {
-            const p = particles[i];
-            p.x += p.vx * 0.016;
-            p.y += p.vy * 0.016;
-            p.vy += 175 * 0.016;
-            p.life -= 0.022;
-            if (p.life <= 0) {
-                particles.splice(i, 1);
-                continue;
-            }
-            ctx.save();
-            ctx.globalAlpha = Math.max(0, p.life);
-            ctx.fillStyle = p.color;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-        }
-    }
-
-    function configureOutcome(quality, won) {
-        if (quality < 40) {
-            return {
-                drinkName: "Zelený odvar",
-                mood: "bad",
-                phase: "bad",
-                color: "#7fd136",
-                msg: "Zelený mix ho úplne rozhodil – sémanticky sme ďaleko od cieľa."
-            };
-        }
-        if (quality < 75) {
-            return {
-                drinkName: "Jantárový tonik",
-                mood: "mid",
-                phase: "mid",
-                color: "#dfa837",
-                msg: "Hm, niečo v tom už cítiť, ale ešte to chce presnejší smer."
-            };
-        }
-        return {
-            drinkName: won ? "Zlatý elixír" : "Čistý nektár",
-            mood: "good",
-            phase: "good",
-            color: won ? "#ffca4b" : "#38bdf8",
-            msg: won
-                ? "Presný zásah! Pripravujem nové tajné slovo do ďalšieho kola."
-                : "Výborný mix – slovo je už veľmi blízko cieľu."
-        };
-    }
-
-    function resetRound(roundNum, msg) {
-        logs = [];
-        renderLogs();
-        document.getElementById("round-pill").textContent = `Kolo #${roundNum}`;
-        document.getElementById("status-main").textContent = msg;
-        document.getElementById("status-sub").textContent = "Čaká na tip · kvalita 0–100";
-        mood = "idle";
-        drinkColor = "#e5932d";
-        liquidRatio = 0.72;
-        setPhase("idle");
-    }
-
-    async function manualNewRound() {
-        if (busy) return;
-        const btn = document.getElementById("new-word-btn");
-        btn.disabled = true;
-        try {
-            const res = await fetch("/new-game", { method: "POST" });
-            const data = await res.json();
-            if (res.ok) {
-                resetRound(data.round, "Nové tajné slovo je nastavené. Zadaj svoj ďalší tip.");
-            }
-        } finally {
-            btn.disabled = false;
-        }
-    }
-
-    async function submitGuess() {
-        if (busy) return;
-        const input = document.getElementById("word-input");
-        const mixBtn = document.getElementById("mix-btn");
-        const newWordBtn = document.getElementById("new-word-btn");
-        const errBox = document.getElementById("err-msg");
-        const word = input.value.trim();
-
-        if (!word) return;
-        errBox.textContent = "";
-
-        try {
-            const res = await fetch("/guess", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ word })
-            });
-            const data = await res.json();
-
-            if (!res.ok) {
-                errBox.textContent = data.error;
-                return;
-            }
-
-            busy = true;
-            mixBtn.disabled = true;
-            newWordBtn.disabled = true;
-            input.value = "";
-
-            const cfg = configureOutcome(data.quality, data.won);
-            const mainEl = document.getElementById("status-main");
-            const subEl = document.getElementById("status-sub");
-
-            mood = "idle";
-            drinkColor = cfg.color;
-            liquidRatio = 0.72;
-            subEl.textContent = `${cfg.drinkName} · kvalita ${data.quality}/100 · #${data.rank}/${data.total} · cos ${data.similarity}`;
-
-            setPhase("shake");
-            mainEl.textContent = "Pretriasa shaker...";
-
-            setTimeout(() => {
-                setPhase("look");
-                mainEl.textContent = "Rozhliada sa po bare...";
-            }, 950);
-
-            setTimeout(() => {
-                setPhase("drink");
-                mainEl.textContent = "Napíja sa...";
-            }, 1850);
-
-            setTimeout(() => {
-                const { w, h } = resizeCanvas();
-                const standLineY = (h * 0.64 + h * 0.75) * 0.5;
-                mood = cfg.mood;
-                setPhase(cfg.phase);
-                spawnParticles(cfg.color, cfg.mood === "good" ? 18 : 10, w * 0.34, standLineY - 122, cfg.mood);
-                mainEl.textContent = cfg.msg;
-
-                logs.unshift({
-                    word: data.word,
-                    drink: cfg.drinkName,
-                    quality: data.quality,
-                    rank: data.rank
-                });
-                renderLogs();
-
-                if (data.won && data.next_round_started) {
-                    setTimeout(() => {
-                        resetRound(
-                            data.round,
-                            `Uhádol si „${data.word}“. Začína Kolo #${data.round} s novým tajným slovom.`
-                        );
-                        busy = false;
-                        mixBtn.disabled = false;
-                        newWordBtn.disabled = false;
-                        input.focus();
-                    }, 1650);
-                } else {
-                    busy = false;
-                    mixBtn.disabled = false;
-                    newWordBtn.disabled = false;
-                    input.focus();
-                }
-            }, 3050);
-
-        } catch (e) {
-            errBox.textContent = "Nepodarilo sa spojiť so serverom.";
-            busy = false;
-            mixBtn.disabled = false;
-            newWordBtn.disabled = false;
-        }
-    }
-
-    function renderLogs() {
-        const el = document.getElementById("log-list");
-        el.innerHTML = logs.map((item) => `
-            <div class="log-row">
-                <div>
-                    <div class="log-word">${item.word}</div>
-                    <div class="log-drink">${item.drink}</div>
-                </div>
-                <div class="log-meta">${item.quality}/100 · #${item.rank}</div>
-            </div>
-        `).join("");
-    }
-
-    requestAnimationFrame(renderFrame);
-</script>
-</body>
-</html>
+if __name__ == "__main__":
+    app.run(debug=True)
