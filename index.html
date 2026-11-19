@@ -13,10 +13,6 @@
             --muted: #a69a8a;
             --line: #342e28;
             --accent: #e5932d;
-            --bad: #7fd136;
-            --mid: #dfa837;
-            --good: #38bdf8;
-            --win: #ffca4b;
         }
 
         * {
@@ -101,7 +97,6 @@
             font-size: 0.82rem;
             font-weight: 600;
             cursor: pointer;
-            transition: border-color 0.15s ease, background 0.15s ease;
         }
 
         .btn-sec:hover:not(:disabled) {
@@ -189,7 +184,6 @@
             border: 1px solid var(--line);
             border-radius: 9px;
             outline: none;
-            transition: border-color 0.15s ease;
         }
 
         input[type="text"]:focus {
@@ -206,15 +200,10 @@
             border-radius: 9px;
             cursor: pointer;
             white-space: nowrap;
-            transition: filter 0.15s ease, transform 0.1s ease;
         }
 
         .btn-main:hover:not(:disabled) {
             filter: brightness(1.08);
-        }
-
-        .btn-main:active:not(:disabled) {
-            transform: scale(0.98);
         }
 
         button:disabled {
@@ -333,9 +322,9 @@
     const canvas = document.getElementById("scene");
     const ctx = canvas.getContext("2d");
 
-    let phase = "idle"; // idle | shake | look | drink | bad | mid | good
+    let phase = "idle";
     let phaseStart = performance.now();
-    let mood = "idle";  // idle | bad | mid | good
+    let mood = "idle";
     let drinkColor = "#e5932d";
     let liquidRatio = 0.72;
     let particles = [];
@@ -568,7 +557,12 @@
 
         ctx.fillStyle = "#323c47";
         ctx.beginPath();
-        ctx.roundRect ? ctx.roundRect(-8, -6, 46, 16, 8) : ctx.rect(-8, -6, 46, 16);
+        ctx.moveTo(-4, -6);
+        ctx.lineTo(34, -6);
+        ctx.arc(34, 2, 8, -Math.PI / 2, Math.PI / 2);
+        ctx.lineTo(-4, 10);
+        ctx.arc(-4, 2, 8, Math.PI / 2, -Math.PI / 2);
+        ctx.closePath();
         ctx.fill();
 
         ctx.fillStyle = "#e8b68c";
@@ -752,4 +746,138 @@
     function resetRound(roundNum, msg) {
         logs = [];
         renderLogs();
-        document.getElementById("round-pill").textContent =
+        document.getElementById("round-pill").textContent = `Kolo #${roundNum}`;
+        document.getElementById("status-main").textContent = msg;
+        document.getElementById("status-sub").textContent = "Čaká na tip · kvalita 0–100";
+        mood = "idle";
+        drinkColor = "#e5932d";
+        liquidRatio = 0.72;
+        setPhase("idle");
+    }
+
+    async function manualNewRound() {
+        if (busy) return;
+        const btn = document.getElementById("new-word-btn");
+        btn.disabled = true;
+        try {
+            const res = await fetch("/new-game", { method: "POST" });
+            const data = await res.json();
+            if (res.ok) {
+                resetRound(data.round, "Nové tajné slovo je nastavené. Zadaj svoj ďalší tip.");
+            }
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async function submitGuess() {
+        if (busy) return;
+        const input = document.getElementById("word-input");
+        const mixBtn = document.getElementById("mix-btn");
+        const newWordBtn = document.getElementById("new-word-btn");
+        const errBox = document.getElementById("err-msg");
+        const word = input.value.trim();
+
+        if (!word) return;
+        errBox.textContent = "";
+
+        try {
+            const res = await fetch("/guess", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ word })
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                errBox.textContent = data.error;
+                return;
+            }
+
+            busy = true;
+            mixBtn.disabled = true;
+            newWordBtn.disabled = true;
+            input.value = "";
+
+            const cfg = configureOutcome(data.quality, data.won);
+            const mainEl = document.getElementById("status-main");
+            const subEl = document.getElementById("status-sub");
+
+            mood = "idle";
+            drinkColor = cfg.color;
+            liquidRatio = 0.72;
+            subEl.textContent = `${cfg.drinkName} · kvalita ${data.quality}/100 · #${data.rank}/${data.total} · cos ${data.similarity}`;
+
+            setPhase("shake");
+            mainEl.textContent = "Pretriasa shaker...";
+
+            setTimeout(() => {
+                setPhase("look");
+                mainEl.textContent = "Rozhliada sa po bare...";
+            }, 950);
+
+            setTimeout(() => {
+                setPhase("drink");
+                mainEl.textContent = "Napíja sa...";
+            }, 1850);
+
+            setTimeout(() => {
+                const { w, h } = resizeCanvas();
+                const standLineY = (h * 0.64 + h * 0.75) * 0.5;
+                mood = cfg.mood;
+                setPhase(cfg.phase);
+                spawnParticles(cfg.color, cfg.mood === "good" ? 18 : 10, w * 0.34, standLineY - 122, cfg.mood);
+                mainEl.textContent = cfg.msg;
+
+                logs.unshift({
+                    word: data.word,
+                    drink: cfg.drinkName,
+                    quality: data.quality,
+                    rank: data.rank
+                });
+                renderLogs();
+
+                if (data.won && data.next_round_started) {
+                    setTimeout(() => {
+                        resetRound(
+                            data.round,
+                            `Uhádol si „${data.word}“. Začína Kolo #${data.round} s novým tajným slovom.`
+                        );
+                        busy = false;
+                        mixBtn.disabled = false;
+                        newWordBtn.disabled = false;
+                        input.focus();
+                    }, 1650);
+                } else {
+                    busy = false;
+                    mixBtn.disabled = false;
+                    newWordBtn.disabled = false;
+                    input.focus();
+                }
+            }, 3050);
+
+        } catch (e) {
+            errBox.textContent = "Nepodarilo sa spojiť so serverom.";
+            busy = false;
+            mixBtn.disabled = false;
+            newWordBtn.disabled = false;
+        }
+    }
+
+    function renderLogs() {
+        const el = document.getElementById("log-list");
+        el.innerHTML = logs.map((item) => `
+            <div class="log-row">
+                <div>
+                    <div class="log-word">${item.word}</div>
+                    <div class="log-drink">${item.drink}</div>
+                </div>
+                <div class="log-meta">${item.quality}/100 · #${item.rank}</div>
+            </div>
+        `).join("");
+    }
+
+    requestAnimationFrame(renderFrame);
+</script>
+</body>
+</html>
